@@ -8,7 +8,7 @@ class ManualSurveyPayload(BaseModel):
     date: str
     stream_width: float | None = None
     stream_depth: float | None = None
-    flow_rate: float | None = None
+    flow_rate: float | str | None = None
     collection_time_1: int | None = None
     collection_time_2: int | None = None
     collection_time_3: int | None = None
