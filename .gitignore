@@ -4,3 +4,8 @@
 __pycache__/
 .vscode/
 frontend/node_modules/
+
+# Ignore Excel files and CSV files, which are test files to ensure my program works correctly. I don't want to accidentally commit them to the repository.
+*.xlsx
+*.xls
+*.csv

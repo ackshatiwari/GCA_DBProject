@@ -156,24 +156,24 @@ def submit_data_manual(payload: ManualSurveyPayload):
 
 @router.post("/submit-data-csv")
 async def submit_data_csv(file: UploadFile = File(...)):
-    logger.info("Incoming CSV file: %s", file.filename)
+    logger.info("Incoming survey file: %s", file.filename)
     if not database_url:
         logger.error("Missing DATABASE_URL")
         raise HTTPException(status_code=500, detail="Database URL not configured")
 
-    if not file.filename or not file.filename.endswith(".csv"):
+    if not file.filename or not file.filename.lower().endswith((".csv", ".xlsx")):
         logger.warning("Invalid file extension: %s", file.filename)
         raise HTTPException(
-            status_code=400, detail="Invalid file type. Please upload a CSV file."
+            status_code=400, detail="Invalid file type. Please upload a CSV or .xlsx Excel file."
         )
 
     try:
         csv_bytes = await file.read()
         logger.info("Read %s bytes from upload", len(csv_bytes))
-        survey_payloads = process_csv_bytes(csv_bytes)
+        survey_payloads = process_csv_bytes(csv_bytes, file.filename)
         logger.info("Parsed %s payload rows", len(survey_payloads))
     except ValueError as ve:
-        logger.warning("CSV processing error: %s", ve)
+        logger.warning("File processing error: %s", ve)
         raise HTTPException(status_code=400, detail=str(ve))
     
     conn = psycopg2.connect(database_url)

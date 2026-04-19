@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from io import BytesIO
+from pathlib import Path
 import re
 
 import pandas as pd
@@ -13,7 +14,7 @@ from backend.schemas.survey import ManualSurveyPayload
 logger = get_file_logger("backend.csv_processor", "csv_import.log")
 
 
-REQUIRED_FIELDS = {"date"}
+REQUIRED_FIELDS = {"stream_width"}
 
 NUMERIC_FIELDS = {
 	"site_id",
@@ -93,7 +94,9 @@ def _to_date_string(value: object) -> str:
 
 	parsed = pd.to_datetime(value, errors="coerce")
 	if pd.isna(parsed):
-		raise ValueError(f"Invalid date value: {value}")
+		# set the default date to today's date if parsing fails, but log a warning
+		logger.warning("Failed to parse date value: %s. Defaulting to today's date.", value)
+		return pd.Timestamp.now().date().isoformat()
 	return parsed.date().isoformat()
 
 
@@ -120,18 +123,31 @@ def _clean_row(raw_row: dict[str, object]) -> dict[str, object]:
 	return cleaned
 
 
-def process_csv_bytes(csv_bytes: bytes) -> list[ManualSurveyPayload]:
-	"""Parse CSV bytes into validated survey payload objects."""
+def _read_dataframe(file_bytes: bytes, filename: str | None = None) -> pd.DataFrame:
+	if not filename:
+		return pd.read_csv(BytesIO(file_bytes))
+
+	extension = Path(filename).suffix.lower()
+	if extension == ".csv":
+		return pd.read_csv(BytesIO(file_bytes))
+	if extension == ".xlsx":
+		return pd.read_excel(BytesIO(file_bytes), engine="openpyxl")
+
+	raise ValueError("Unsupported file type. Please upload a CSV or .xlsx Excel file.")
+
+
+def process_csv_bytes(csv_bytes: bytes, filename: str | None = None) -> list[ManualSurveyPayload]:
+	"""Parse CSV or Excel bytes into validated survey payload objects."""
 	logger.info("Received %s bytes", len(csv_bytes) if csv_bytes else 0)
 	if not csv_bytes:
 		logger.warning("Validation failed: CSV file is empty")
 		raise ValueError("CSV file is empty")
 
-	dataframe = pd.read_csv(BytesIO(csv_bytes))
-	logger.info("Parsed CSV shape: %s", dataframe.shape)
+	dataframe = _read_dataframe(csv_bytes, filename)
+	logger.info("Parsed tabular file shape: %s", dataframe.shape)
 	if dataframe.empty:
-		logger.warning("Validation failed: CSV has no data rows")
-		raise ValueError("CSV has no data rows")
+		logger.warning("Validation failed: file has no data rows")
+		raise ValueError("File has no data rows")
 
 	normalized_columns = {
 		column: _normalize_column_name(str(column)) for column in dataframe.columns

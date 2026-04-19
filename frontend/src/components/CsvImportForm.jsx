@@ -14,7 +14,7 @@ function CsvImportForm() {
         event.preventDefault()
 
         if (!csvFile) {
-            setStatusMessage('Please choose a CSV file first.')
+            setStatusMessage('Please choose a CSV or .xlsx file first.')
             return
         }
         const formData = new FormData()
@@ -28,24 +28,24 @@ function CsvImportForm() {
             })
             const result = await response.json()
             if (response.ok) {  
-                setStatusMessage('CSV file uploaded successfully!')
+                setStatusMessage('Survey file uploaded successfully!')
             }
 
             setStatusMessage(`Response: ${JSON.stringify(result)}`)
             setCsvFile(null) 
         } catch (error) {
-            setStatusMessage('Error uploading CSV file.')
+            setStatusMessage('Error uploading survey file.')
         }
     }
 
     return (
         <form onSubmit={handleSubmit} className="csv-import-form">
-            <h3>Import CSV</h3>
+            <h3>Import CSV or Excel</h3>
             <label>
-                Choose a CSV file
-                <input type="file" accept=".csv" onChange={handleFileChange} />
+                Choose a CSV or .xlsx file
+                <input type="file" accept=".csv,.xlsx" onChange={handleFileChange} />
             </label>
-            <button type="submit">Upload CSV</button>
+            <button type="submit">Upload File</button>
         </form>
     )
 }
