@@ -1,0 +1,51 @@
+2026-04-17 21:17:43 INFO [backend.api.surveys] Incoming CSV file: benthic_tester.csv
+2026-04-17 21:17:43 INFO [backend.api.surveys] Read 3192 bytes from upload
+2026-04-17 21:17:43 INFO [backend.csv_processor] Received 3192 bytes
+2026-04-17 21:17:43 INFO [backend.csv_processor] Parsed CSV shape: (20, 40)
+2026-04-17 21:17:43 INFO [backend.csv_processor] Normalized columns: ['date', 'site_id', 'name', 'weather', 'sampling_notes', 'stream_width', 'stream_depth', 'flow_rate', 'collection_time_1', 'collection_time_2', 'collection_time_3', 'collection_time_4', 'worms', 'flatworms', 'leeches', 'crayfish', 'sowbugs', 'scuds', 'stoneflies', 'mayflies', 'dragonflies', 'damselflies', 'hellgrammites', 'fishflies', 'alderflies', 'common_netspinners', 'most_caddisflies', 'beetles', 'midges', 'blackflies', 'most_true_flies', 'gilled_snails', 'lunged_snails', 'clams', 'metric_1', 'metric_2', 'metric_3', 'metric_4', 'metric_5', 'metric_6']
+2026-04-17 21:17:43 INFO [backend.csv_processor] Starting row validation for 20 rows
+2026-04-17 21:17:43 INFO [backend.csv_processor] Successfully validated 20 rows
+2026-04-17 21:17:43 INFO [backend.api.surveys] Parsed 20 payload rows
+2026-04-17 21:17:44 INFO [backend.api.surveys] Database connection opened
+2026-04-17 21:17:44 INFO [backend.api.surveys] Inserted survey id: 45
+2026-04-17 21:17:45 INFO [backend.api.surveys] Committed survey id: 45
+2026-04-17 21:17:45 INFO [backend.api.surveys] Inserted survey id: 46
+2026-04-17 21:17:46 INFO [backend.api.surveys] Committed survey id: 46
+2026-04-17 21:17:46 INFO [backend.api.surveys] Inserted survey id: 47
+2026-04-17 21:17:47 INFO [backend.api.surveys] Committed survey id: 47
+2026-04-17 21:17:47 INFO [backend.api.surveys] Inserted survey id: 48
+2026-04-17 21:17:48 INFO [backend.api.surveys] Committed survey id: 48
+2026-04-17 21:17:48 INFO [backend.api.surveys] Inserted survey id: 49
+2026-04-17 21:17:49 INFO [backend.api.surveys] Committed survey id: 49
+2026-04-17 21:17:49 INFO [backend.api.surveys] Inserted survey id: 50
+2026-04-17 21:17:50 INFO [backend.api.surveys] Committed survey id: 50
+2026-04-17 21:17:50 INFO [backend.api.surveys] Inserted survey id: 51
+2026-04-17 21:17:50 INFO [backend.api.surveys] Committed survey id: 51
+2026-04-17 21:17:50 INFO [backend.api.surveys] Inserted survey id: 52
+2026-04-17 21:17:51 INFO [backend.api.surveys] Committed survey id: 52
+2026-04-17 21:17:51 INFO [backend.api.surveys] Inserted survey id: 53
+2026-04-17 21:17:52 INFO [backend.api.surveys] Committed survey id: 53
+2026-04-17 21:17:52 INFO [backend.api.surveys] Inserted survey id: 54
+2026-04-17 21:17:53 INFO [backend.api.surveys] Committed survey id: 54
+2026-04-17 21:17:53 INFO [backend.api.surveys] Inserted survey id: 55
+2026-04-17 21:17:54 INFO [backend.api.surveys] Committed survey id: 55
+2026-04-17 21:17:55 INFO [backend.api.surveys] Inserted survey id: 56
+2026-04-17 21:17:55 INFO [backend.api.surveys] Committed survey id: 56
+2026-04-17 21:17:55 INFO [backend.api.surveys] Inserted survey id: 57
+2026-04-17 21:17:56 INFO [backend.api.surveys] Committed survey id: 57
+2026-04-17 21:17:56 INFO [backend.api.surveys] Inserted survey id: 58
+2026-04-17 21:17:57 INFO [backend.api.surveys] Committed survey id: 58
+2026-04-17 21:17:57 INFO [backend.api.surveys] Inserted survey id: 59
+2026-04-17 21:17:58 INFO [backend.api.surveys] Committed survey id: 59
+2026-04-17 21:17:58 INFO [backend.api.surveys] Inserted survey id: 60
+2026-04-17 21:17:58 INFO [backend.api.surveys] Committed survey id: 60
+2026-04-17 21:17:58 INFO [backend.api.surveys] Inserted survey id: 61
+2026-04-17 21:17:59 INFO [backend.api.surveys] Committed survey id: 61
+2026-04-17 21:17:59 INFO [backend.api.surveys] Inserted survey id: 62
+2026-04-17 21:18:00 INFO [backend.api.surveys] Committed survey id: 62
+2026-04-17 21:18:00 INFO [backend.api.surveys] Inserted survey id: 63
+2026-04-17 21:18:01 INFO [backend.api.surveys] Committed survey id: 63
+2026-04-17 21:18:01 INFO [backend.api.surveys] Inserted survey id: 64
+2026-04-17 21:18:01 INFO [backend.api.surveys] Committed survey id: 64
+2026-04-17 21:18:01 INFO [backend.api.surveys] Database connection closed
+2026-04-17 21:18:01 INFO [backend.api.surveys] Completed import. Total inserted: 20

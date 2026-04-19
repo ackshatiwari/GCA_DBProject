@@ -1,0 +1,73 @@
+.app-shell {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 20px 48px;
+}
+
+.app-shell h1 {
+    margin: 0 0 24px;
+    font-size: 2rem;
+    line-height: 1.2;
+}
+
+.forms-container {
+    display: grid;
+    gap: 20px;
+}
+
+.form-section {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.form-section form {
+    display: grid;
+    gap: 12px;
+}
+
+.form-section label {
+    display: grid;
+    gap: 6px;
+    font-weight: 500;
+}
+
+.form-section input,
+.form-section textarea,
+.form-section button {
+    font: inherit;
+}
+
+.form-section input,
+.form-section textarea {
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 10px 12px;
+    background: #ffffff;
+}
+
+.form-section textarea {
+    min-height: 96px;
+    resize: vertical;
+}
+
+.form-section button {
+    border: 0;
+    border-radius: 8px;
+    padding: 10px 14px;
+    background: #2d6cdf;
+    color: #ffffff;
+    cursor: pointer;
+    width: fit-content;
+}
+
+.form-section button:hover {
+    background: #2558b8;
+}
+
+.form-section p {
+    margin: 0;
+    color: #374151;
+}

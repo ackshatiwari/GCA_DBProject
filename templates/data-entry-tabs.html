@@ -1,0 +1,348 @@
+<html>
+
+<head>
+    <style>
+        .data-entry-tabs {
+            max-width: 900px;
+            margin: 1rem 0;
+        }
+
+        .data-entry-tabs .tab-labels {
+            display: flex;
+            gap: 0;
+        }
+
+        .data-entry-tabs .tab-labels label {
+            flex: 1;
+            padding: 10px 12px;
+            background: #f1f1f1;
+            text-align: center;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            border-bottom: 0;
+        }
+
+        .data-entry-tabs input[type="radio"] {
+            display: none;
+        }
+
+        .data-entry-tabs .tab-contents {
+            border: 1px solid #ccc;
+            padding: 16px;
+            background: #fff;
+        }
+
+        .data-entry-tabs .tab-content {
+            display: none;
+        }
+
+        #tab-manual:checked~.tab-labels label[for="tab-manual"],
+        #tab-csv:checked~.tab-labels label[for="tab-csv"] {
+            background: #fff;
+            font-weight: 600;
+        }
+
+        #tab-manual:checked~.tab-contents .manual,
+        #tab-csv:checked~.tab-contents .csv {
+            display: block;
+        }
+
+        .data-entry-tabs form>div {
+            margin-bottom: 10px;
+        }
+
+        .data-entry-tabs input[type="text"],
+        .data-entry-tabs input[type="email"],
+        .data-entry-tabs input[type="date"],
+        .data-entry-tabs textarea {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 6px;
+        }
+
+        .data-entry-tabs .muted {
+            color: #666;
+            font-size: 0.95rem;
+            margin-top: 8px;
+        }
+
+        .manual-steps input[type="radio"] {
+            display: none;
+        }
+
+        .manual-step {
+            display: none;
+        }
+
+        #manual-step-1:checked~.manual-contents .step-1 {
+            display: block;
+        }
+
+        #manual-step-2:checked~.manual-contents .step-2 {
+            display: block;
+        }
+
+        #manual-step-3:checked~.manual-contents .step-3 {
+            display: block;
+        }
+
+        .step-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .step-actions label.button,
+        .step-actions button {
+            padding: 8px 12px;
+            background: #2d6cdf;
+            color: #fff;
+            border: 0;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .step-actions label.button.secondary {
+            background: #666;
+        }
+
+        .tax-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .tax-grid label {
+            display: block;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .metrics-grid label {
+            display: block;
+        }
+    </style>
+
+</head>
+
+<body>
+
+
+    <div class="data-entry-tabs">
+
+
+        <input type="radio" name="entry-tab" id="tab-manual" checked>
+        <input type="radio" name="entry-tab" id="tab-csv">
+
+        <div class="tab-labels">
+            <label for="tab-manual">Enter Data Manually</label>
+            <label for="tab-csv">Import CSV</label>
+        </div>
+
+        <div class="tab-contents">
+            <div class="tab-content manual">
+                <form method="post" action="/submit-data-manual" enctype="application/x-www-form-urlencoded" id="submit-data-manual-form">
+                    <div class="manual-steps">
+                        <input type="radio" name="manual-step" id="manual-step-1" checked>
+                        <input type="radio" name="manual-step" id="manual-step-2">
+                        <input type="radio" name="manual-step" id="manual-step-3">
+
+                        <div class="manual-contents">
+                            <div class="manual-step step-1">
+                                <div><label>Certified Monitor Name<br><input name="name" type="text" placeholder="Full name" id="name"></label></div><br>
+                                <div><label>Weather Conditions (last 72 hrs)<br><input name="weather" type="text" placeholder="e.g., Sunny, Cloudy" id="weather"></label></div><br>
+                                <div><label>Survey Date<br><input name="date" type="date" id="date"></label></div><br>
+                                <div><label>Avg. Stream Width<br><input name="stream_width" type="text" placeholder="e.g., 20" id="stream_width"></label></div> <br>
+                                <div><label>Avg. Stream Depth<br><input name="stream_depth" type="text" placeholder="e.g., 2" id="stream_depth"></label></div><br>
+                                <div><label>Flow Rate<br><input name="flow_rate" type="text" placeholder="e.g., Low, Normal, High" id="flow_rate"></label></div><br>
+                                <div><label>Collection Time (Nets 1-4)<br><input name="collection_time_1" type="text" placeholder="Net 1: e.g., 30" id="collection_time_1"><input name="collection_time_2" type="text" placeholder="Net 2: e.g., 30" id="collection_time_2"><input name="collection_time_3" type="text" placeholder="Net 3: e.g., 30" id="collection_time_3"><input name="collection_time_4" type="text" placeholder="Net 4: e.g., 30" id="collection_time_4"></label></div><br>
+                                <div><label>Sampling Notes<br><input name="sampling_notes" type="text" placeholder="Additional notes about the sampling process" id="sampling_notes"></label></div><br>
+
+                                <div class="step-actions"><label class="button" for="manual-step-2">Next</label></div>
+                            </div>
+
+                            <div class="manual-step step-2">
+                                <h4>Net counts / Taxa</h4>
+                                <div class="tax-grid">
+                                    <label>worms<br><input name="worms" type="number" min="0" id="worms"></label>
+                                    <label>flatworms<br><input name="flatworms" type="number" min="0" id="flatworms"></label>
+                                    <label>leeches<br><input name="leeches" type="number" min="0" id="leeches"></label>
+                                    <label>crayfish<br><input name="crayfish" type="number" min="0" id="crayfish"></label>
+                                    <label>sowbugs<br><input name="sowbugs" type="number" min="0" id="sowbugs"></label>
+                                    <label>scuds<br><input name="scuds" type="number" min="0" id="scuds"></label>
+                                    <label>stoneflies<br><input name="stoneflies" type="number" min="0" id="stoneflies"></label>
+                                    <label>mayflies<br><input name="mayflies" type="number" min="0" id="mayflies"></label>
+                                    <label>dragonflies<br><input name="dragonflies" type="number" min="0" id="dragonflies"></label>
+                                    <label>damselflies<br><input name="damselflies" type="number" min="0" id="damselflies"></label>
+                                    <label>hellgrammites<br><input name="hellgrammites" type="number" min="0" id="hellgrammites"></label>
+                                    <label>fishflies<br><input name="fishflies" type="number" min="0" id="fishflies"></label>
+                                    <label>alderflies<br><input name="alderflies" type="number" min="0" id="alderflies"></label>
+                                    <label>common_netspinners<br><input name="common_netspinners" type="number"
+                                            min="0" id="common_netspinners"></label>
+                                    <label>most_caddisflies<br><input name="most_caddisflies" type="number"
+                                            min="0" id="most_caddisflies"></label>
+                                    <label>beetles<br><input name="beetles" type="number" min="0" id="beetles"></label>
+                                    <label>midges<br><input name="midges" type="number" min="0" id="midges"></label>
+                                    <label>blackflies<br><input name="blackflies" type="number" min="0" id="blackflies"></label>
+                                    <label>most_true_flies<br><input name="most_true_flies" type="number"
+                                            min="0" id="most_true_flies"></label>
+                                    <label>gilled_snails<br><input name="gilled_snails" type="number" min="0" id="gilled_snails"></label>
+                                    <label>lunged_snails<br><input name="lunged_snails" type="number" min="0" id="lunged_snails"></label>
+                                    <label>clams<br><input name="clams" type="number" min="0" id="clams"></label>
+                                </div>
+
+                                <div class="step-actions">
+                                    <label class="button secondary" for="manual-step-1">Back</label>
+                                    <label class="button" for="manual-step-3">Next</label>
+                                </div>
+                            </div>
+
+                            <div class="manual-step step-3">
+                                <h4>Metrics</h4>
+                                <div class="metrics-grid">
+                                    <label>metric_1<br><input name="metric_1" type="number" step="any" id="metric_1"></label>
+                                    <label>metric_2<br><input name="metric_2" type="number" step="any" id="metric_2"></label>
+                                    <label>metric_3<br><input name="metric_3" type="number" step="any" id="metric_3"></label>
+                                    <label>metric_4<br><input name="metric_4" type="number" step="any" id="metric_4"></label>
+                                    <label>metric_5<br><input name="metric_5" type="number" step="any" id="metric_5"></label>
+                                    <label>metric_6<br><input name="metric_6" type="number" step="any" id="metric_6"></label>
+                                </div>
+
+                                <div class="step-actions">
+                                    <label class="button secondary" for="manual-step-2">Back</label>
+                                    <button type="submit" id="submit-manual">Submit</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+            </div>
+            </form>
+        </div>
+
+        <div class="tab-content csv">
+            <form method="post" action="/import-csv" enctype="multipart/form-data">
+                <div>
+                    <label>Select CSV file<br>
+                        <input name="csvfile" type="file" accept=".csv">
+                    </label>
+                </div>
+                <div>
+                    <button type="submit">Upload CSV</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+    </div>
+    <script>
+        const submitManualBtn = document.getElementById('submit-manual');
+        const submitManualForm = document.getElementById('submit-data-manual-form');
+
+
+
+        submitManualForm.addEventListener('submit', async function (e) {
+            const certifiedMonitorName = document.getElementById('certified_monitor_name').value;
+            const weatherConditions = document.getElementById('weather').value;
+            const surveyDate = document.getElementById('survey_date').value;
+            const streamWidth = document.getElementById('stream_width').value;
+            const streamDepth = document.getElementById('stream_depth').value;
+            const flowRate = document.getElementById('flow_rate').value;
+            const collectionTime1 = document.getElementById('collection_time_1').value;
+            const collectionTime2 = document.getElementById('collection_time_2').value;
+            const collectionTime3 = document.getElementById('collection_time_3').value;
+            const collectionTime4 = document.getElementById('collection_time_4').value;
+
+            const samplingNotes = document.getElementById('sampling_notes').value;
+            const worms = document.getElementById('worms').value;
+            const flatworms = document.getElementById('flatworms').value;
+            const leeches = document.getElementById('leeches').value;
+            const crayfish = document.getElementById('crayfish').value;
+            const sowbugs = document.getElementById('sowbugs').value;
+            const scuds = document.getElementById('scuds').value;
+            const stoneflies = document.getElementById('stoneflies').value;
+            const mayflies = document.getElementById('mayflies').value;
+            const dragonflies = document.getElementById('dragonflies').value;
+            const damselflies = document.getElementById('damselflies').value;
+            const hellgrammites = document.getElementById('hellgrammites').value;
+            const fishflies = document.getElementById('fishflies').value;
+            const alderflies = document.getElementById('alderflies').value;
+            const commonNetspinners = document.getElementById('common_netspinners').value;
+            const mostCaddisflies = document.getElementById('most_caddisflies').value;
+            const beetles = document.getElementById('beetles').value;
+            const midges = document.getElementById('midges').value;
+            const blackflies = document.getElementById('blackflies').value;
+            const mostTrueFlies = document.getElementById('most_true_flies').value
+            const gilledSnails = document.getElementById('gilled_snails').value;
+            const lungedSnails = document.getElementById('lunged_snails').value
+            const clams = document.getElementById('clams').value;
+
+            const metric1 = document.getElementById('metric_1').value;
+            const metric2 = document.getElementById('metric_2').value;
+            const metric3 = document.getElementById('metric_3').value;
+            const metric4 = document.getElementById('metric_4').value;
+            const metric5 = document.getElementById('metric_5').value;
+            const metric6 = document.getElementById('metric_6').value;
+
+            e.preventDefault();
+            const formData = new FormData();
+
+            // survey meta
+            formData.append('name', certifiedMonitorName);
+            formData.append('weather', weatherConditions);
+            formData.append('date', surveyDate);
+            formData.append('stream_width', streamWidth);
+            formData.append('stream_depth', streamDepth);
+            formData.append('flow_rate', flowRate);
+            formData.append('collection_time_1', collectionTime1);
+            formData.append('collection_time_2', collectionTime2);
+            formData.append('collection_time_3', collectionTime3);
+            formData.append('collection_time_4', collectionTime4);
+            formData.append('sampling_notes', samplingNotes);
+
+            // taxa counts
+            formData.append('worms', worms);
+            formData.append('flatworms', flatworms);
+            formData.append('leeches', leeches);
+            formData.append('crayfish', crayfish);
+            formData.append('sowbugs', sowbugs);
+            formData.append('scuds', scuds);
+            formData.append('stoneflies', stoneflies);
+            formData.append('mayflies', mayflies);1
+            formData.append('dragonflies', dragonflies);
+            formData.append('damselflies', damselflies);
+            formData.append('hellgrammites', hellgrammites);
+            formData.append('fishflies', fishflies);
+            formData.append('alderflies', alderflies);
+            formData.append('common_netspinners', commonNetspinners);
+            formData.append('most_caddisflies', mostCaddisflies);
+            formData.append('beetles', beetles);
+            formData.append('midges', midges);
+            formData.append('blackflies', blackflies);
+            formData.append('most_true_flies', mostTrueFlies);
+            formData.append('gilled_snails', gilledSnails);
+            formData.append('lunged_snails', lungedSnails);
+            formData.append('clams', clams);
+
+            // metrics
+            formData.append('metric_1', metric1);
+            formData.append('metric_2', metric2);
+            formData.append('metric_3', metric3);
+            formData.append('metric_4', metric4);
+            formData.append('metric_5', metric5);
+            formData.append('metric_6', metric6);
+        
+            
+
+            const res = await fetch('/submit-data-manual', {
+                method: 'POST',
+                body: formData
+            });
+        });
+    </script>
+</body>
+
+</html>
