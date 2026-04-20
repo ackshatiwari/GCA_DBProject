@@ -3,6 +3,11 @@ import { useState } from 'react'
 function CsvImportForm() {
     const [csvFile, setCsvFile] = useState(null)
     const [statusMessage, setStatusMessage] = useState('')
+    const statusTone = statusMessage.startsWith('Survey file uploaded successfully')
+        ? 'success'
+        : statusMessage.startsWith('Error')
+            ? 'error'
+            : 'info'
 
     function handleFileChange(event) {
         const file = event.target.files?.[0] || null
@@ -41,11 +46,16 @@ function CsvImportForm() {
     return (
         <form onSubmit={handleSubmit} className="csv-import-form">
             <h3>Import CSV or Excel</h3>
+            <p className="helper-text">Upload a single survey spreadsheet to process and insert records.</p>
             <label>
                 Choose a CSV or .xlsx file
                 <input type="file" accept=".csv,.xlsx" onChange={handleFileChange} />
             </label>
-            <button type="submit">Upload File</button>
+            {csvFile ? <p className="selected-file">Selected: {csvFile.name}</p> : null}
+            <div className="form-actions">
+                <button type="submit">Upload File</button>
+                {statusMessage ? <p className={`status-message ${statusTone}`}>{statusMessage}</p> : null}
+            </div>
         </form>
     )
 }

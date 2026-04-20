@@ -1789,3 +1789,99 @@ name
 2026-04-19 11:31:08 INFO [backend.api.surveys] Committed survey id: 982
 2026-04-19 11:31:08 INFO [backend.api.surveys] Database connection closed
 2026-04-19 11:31:08 INFO [backend.api.surveys] Completed import. Total inserted: 286
+2026-04-19 20:53:03 INFO [backend.api.surveys] Received manual survey data
+2026-04-19 20:53:04 INFO [backend.api.surveys] Payload data prepared for survey id 983
+2026-04-19 20:53:04 INFO [backend.api.surveys] Inserting macro taxa field worms with count 78 and survey_id 983
+2026-04-19 20:53:04 INFO [backend.api.surveys] Inserting macro taxa field flatworms with count 787 and survey_id 983
+2026-04-19 20:53:04 INFO [backend.api.surveys] Inserting macro taxa field leeches with count 4 and survey_id 983
+2026-04-19 20:53:04 INFO [backend.api.surveys] Inserting macro taxa field crayfish with count 78 and survey_id 983
+2026-04-19 20:53:04 INFO [backend.api.surveys] Inserting macro taxa field sowbugs with count 7 and survey_id 983
+2026-04-19 20:53:04 INFO [backend.api.surveys] Inserting macro taxa field scuds with count 7 and survey_id 983
+2026-04-19 20:53:04 INFO [backend.api.surveys] Inserting macro taxa field stoneflies with count 8 and survey_id 983
+2026-04-19 20:53:05 INFO [backend.api.surveys] Inserting macro taxa field mayflies with count 8 and survey_id 983
+2026-04-19 20:53:05 INFO [backend.api.surveys] Inserting macro taxa field dragonflies with count 7 and survey_id 983
+2026-04-19 20:53:05 INFO [backend.api.surveys] Inserting macro taxa field damselflies with count 7 and survey_id 983
+2026-04-19 20:53:05 INFO [backend.api.surveys] Inserting macro taxa field hellgrammites with count 7 and survey_id 983
+2026-04-19 20:53:05 INFO [backend.api.surveys] Inserting macro taxa field fishflies with count 7 and survey_id 983
+2026-04-19 20:53:05 INFO [backend.api.surveys] Inserting macro taxa field alderflies with count 7 and survey_id 983
+2026-04-19 20:53:05 INFO [backend.api.surveys] Inserting macro taxa field common_netspinners with count 7 and survey_id 983
+2026-04-19 20:53:05 INFO [backend.api.surveys] Inserting macro taxa field most_caddisflies with count 7 and survey_id 983
+2026-04-19 20:53:05 INFO [backend.api.surveys] Inserting macro taxa field beetles with count 7 and survey_id 983
+2026-04-19 20:53:05 INFO [backend.api.surveys] Inserting macro taxa field midges with count 7 and survey_id 983
+2026-04-19 20:53:05 INFO [backend.api.surveys] Inserting macro taxa field blackflies with count 7 and survey_id 983
+2026-04-19 20:53:05 INFO [backend.api.surveys] Inserting macro taxa field most_true_flies with count 7 and survey_id 983
+2026-04-19 20:53:05 INFO [backend.api.surveys] Inserting macro taxa field gilled_snails with count 7 and survey_id 983
+2026-04-19 20:53:05 INFO [backend.api.surveys] Inserting macro taxa field lunged_snails with count 7 and survey_id 983
+2026-04-19 20:53:05 INFO [backend.api.surveys] Inserting macro taxa field clams with count 7 and survey_id 983
+2026-04-19 21:00:50 INFO [backend.api.surveys] Incoming survey file: benthic_tester_xls.xlsx
+2026-04-19 21:00:50 INFO [backend.api.surveys] Read 9222 bytes from upload
+2026-04-19 21:00:50 INFO [backend.csv_processor] Received 9222 bytes
+2026-04-19 21:00:50 INFO [backend.csv_processor] Selected worksheet Sheet1 with score 6
+2026-04-19 21:00:50 INFO [backend.csv_processor] Parsed tabular file shape: (20, 40)
+2026-04-19 21:00:50 INFO [backend.csv_processor] Normalized columns: ['date', 'site_id', 'name', 'weather', 'sampling_notes', 'stream_width', 'stream_depth', 'flow_rate', 'collection_time_1', 'collection_time_2', 'collection_time_3', 'collection_time_4', 'worms', 'flatworms', 'leeches', 'crayfish', 'sowbugs', 'scuds', 'stoneflies', 'mayflies', 'dragonflies', 'damselflies', 'hellgrammites', 'fishflies', 'alderflies', 'common_netspinners', 'most_caddisflies', 'beetles', 'midges', 'blackflies', 'most_true_flies', 'gilled_snails', 'lunged_snails', 'clams', 'metric_1', 'metric_2', 'metric_3', 'metric_4', 'metric_5', 'metric_6']
+2026-04-19 21:00:50 INFO [backend.csv_processor] Starting row validation for 20 rows
+2026-04-19 21:00:50 WARNING [backend.csv_processor] Failed to parse date value: ########. Defaulting to today's date.
+2026-04-19 21:00:50 WARNING [backend.csv_processor] Failed to parse date value: ########. Defaulting to today's date.
+2026-04-19 21:00:50 WARNING [backend.csv_processor] Failed to parse date value: ########. Defaulting to today's date.
+2026-04-19 21:00:50 WARNING [backend.csv_processor] Failed to parse date value: ########. Defaulting to today's date.
+2026-04-19 21:00:50 WARNING [backend.csv_processor] Failed to parse date value: ########. Defaulting to today's date.
+2026-04-19 21:00:50 WARNING [backend.csv_processor] Failed to parse date value: ########. Defaulting to today's date.
+2026-04-19 21:00:50 WARNING [backend.csv_processor] Failed to parse date value: ########. Defaulting to today's date.
+2026-04-19 21:00:50 WARNING [backend.csv_processor] Failed to parse date value: ########. Defaulting to today's date.
+2026-04-19 21:00:50 WARNING [backend.csv_processor] Failed to parse date value: ########. Defaulting to today's date.
+2026-04-19 21:00:50 WARNING [backend.csv_processor] Failed to parse date value: ########. Defaulting to today's date.
+2026-04-19 21:00:50 WARNING [backend.csv_processor] Failed to parse date value: ########. Defaulting to today's date.
+2026-04-19 21:00:50 WARNING [backend.csv_processor] Failed to parse date value: ########. Defaulting to today's date.
+2026-04-19 21:00:50 WARNING [backend.csv_processor] Failed to parse date value: ########. Defaulting to today's date.
+2026-04-19 21:00:50 WARNING [backend.csv_processor] Failed to parse date value: ########. Defaulting to today's date.
+2026-04-19 21:00:50 WARNING [backend.csv_processor] Failed to parse date value: ########. Defaulting to today's date.
+2026-04-19 21:00:50 WARNING [backend.csv_processor] Failed to parse date value: ########. Defaulting to today's date.
+2026-04-19 21:00:50 WARNING [backend.csv_processor] Failed to parse date value: ########. Defaulting to today's date.
+2026-04-19 21:00:50 WARNING [backend.csv_processor] Failed to parse date value: ########. Defaulting to today's date.
+2026-04-19 21:00:50 WARNING [backend.csv_processor] Failed to parse date value: ########. Defaulting to today's date.
+2026-04-19 21:00:50 WARNING [backend.csv_processor] Failed to parse date value: ########. Defaulting to today's date.
+2026-04-19 21:00:50 INFO [backend.csv_processor] Successfully validated 20 rows
+2026-04-19 21:00:50 INFO [backend.api.surveys] Parsed 20 payload rows
+2026-04-19 21:00:52 INFO [backend.api.surveys] Database connection opened
+2026-04-19 21:00:52 INFO [backend.api.surveys] Inserted survey id: 984
+2026-04-19 21:00:52 INFO [backend.api.surveys] Committed survey id: 984
+2026-04-19 21:00:52 INFO [backend.api.surveys] Inserted survey id: 985
+2026-04-19 21:00:53 INFO [backend.api.surveys] Committed survey id: 985
+2026-04-19 21:00:53 INFO [backend.api.surveys] Inserted survey id: 986
+2026-04-19 21:00:54 INFO [backend.api.surveys] Committed survey id: 986
+2026-04-19 21:00:54 INFO [backend.api.surveys] Inserted survey id: 987
+2026-04-19 21:00:55 INFO [backend.api.surveys] Committed survey id: 987
+2026-04-19 21:00:55 INFO [backend.api.surveys] Inserted survey id: 988
+2026-04-19 21:00:56 INFO [backend.api.surveys] Committed survey id: 988
+2026-04-19 21:00:56 INFO [backend.api.surveys] Inserted survey id: 989
+2026-04-19 21:00:57 INFO [backend.api.surveys] Committed survey id: 989
+2026-04-19 21:00:57 INFO [backend.api.surveys] Inserted survey id: 990
+2026-04-19 21:00:57 INFO [backend.api.surveys] Committed survey id: 990
+2026-04-19 21:00:57 INFO [backend.api.surveys] Inserted survey id: 991
+2026-04-19 21:00:58 INFO [backend.api.surveys] Committed survey id: 991
+2026-04-19 21:00:58 INFO [backend.api.surveys] Inserted survey id: 992
+2026-04-19 21:00:59 INFO [backend.api.surveys] Committed survey id: 992
+2026-04-19 21:00:59 INFO [backend.api.surveys] Inserted survey id: 993
+2026-04-19 21:01:00 INFO [backend.api.surveys] Committed survey id: 993
+2026-04-19 21:01:00 INFO [backend.api.surveys] Inserted survey id: 994
+2026-04-19 21:01:01 INFO [backend.api.surveys] Committed survey id: 994
+2026-04-19 21:01:01 INFO [backend.api.surveys] Inserted survey id: 995
+2026-04-19 21:01:01 INFO [backend.api.surveys] Committed survey id: 995
+2026-04-19 21:01:01 INFO [backend.api.surveys] Inserted survey id: 996
+2026-04-19 21:01:02 INFO [backend.api.surveys] Committed survey id: 996
+2026-04-19 21:01:02 INFO [backend.api.surveys] Inserted survey id: 997
+2026-04-19 21:01:02 INFO [backend.api.surveys] Committed survey id: 997
+2026-04-19 21:01:02 INFO [backend.api.surveys] Inserted survey id: 998
+2026-04-19 21:01:03 INFO [backend.api.surveys] Committed survey id: 998
+2026-04-19 21:01:03 INFO [backend.api.surveys] Inserted survey id: 999
+2026-04-19 21:01:04 INFO [backend.api.surveys] Committed survey id: 999
+2026-04-19 21:01:04 INFO [backend.api.surveys] Inserted survey id: 1000
+2026-04-19 21:01:04 INFO [backend.api.surveys] Committed survey id: 1000
+2026-04-19 21:01:04 INFO [backend.api.surveys] Inserted survey id: 1001
+2026-04-19 21:01:04 INFO [backend.api.surveys] Committed survey id: 1001
+2026-04-19 21:01:04 INFO [backend.api.surveys] Inserted survey id: 1002
+2026-04-19 21:01:05 INFO [backend.api.surveys] Committed survey id: 1002
+2026-04-19 21:01:05 INFO [backend.api.surveys] Inserted survey id: 1003
+2026-04-19 21:01:05 INFO [backend.api.surveys] Committed survey id: 1003
+2026-04-19 21:01:05 INFO [backend.api.surveys] Database connection closed
+2026-04-19 21:01:05 INFO [backend.api.surveys] Completed import. Total inserted: 20
