@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { useAuthenticatedFetch } from '../api/client'
 
 function ManualEntryForm() {
+    const authenticatedFetch = useAuthenticatedFetch()
     const [form, setForm] = useState({
         site_id: '',
         name: '',
@@ -60,7 +62,7 @@ function ManualEntryForm() {
         setSubmitResponse('Submitting...')
 
         try {
-            const response = await fetch('/api/submit-data-manual', {
+            const response = await authenticatedFetch('/api/submit-data-manual', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

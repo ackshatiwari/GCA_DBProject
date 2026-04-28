@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { useAuthenticatedFetch } from '../api/client'
 
 function CsvImportForm() {
+    const authenticatedFetch = useAuthenticatedFetch()
     const [csvFile, setCsvFile] = useState(null)
     const [statusMessage, setStatusMessage] = useState('')
     const statusTone = statusMessage.startsWith('Survey file uploaded successfully')
@@ -22,18 +24,20 @@ function CsvImportForm() {
             setStatusMessage('Please choose a CSV or .xlsx file first.')
             return
         }
+
         const formData = new FormData()
         formData.append('file', csvFile)
 
         setStatusMessage(`Uploading ${csvFile.name}...`)
         try {
-            const response = await fetch('/api/submit-data-csv', {
+            const response = await authenticatedFetch('/api/submit-data-csv', {
                 method: 'POST',
                 body: formData,
             })
             const result = await response.json()
-            if (response.ok) {  
-                setStatusMessage('Survey file uploaded successfully!')
+            if (!response.ok) {
+                setStatusMessage(`Error: ${JSON.stringify(result.detail || result)}`)
+                return
             }
 
             setStatusMessage(`Response: ${JSON.stringify(result)}`)
