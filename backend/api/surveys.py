@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi import File, UploadFile
+from backend.api.auth import require_permission
 from backend.app.logging_utils import get_file_logger
 from backend.services.csv_processor import process_csv_bytes
 from backend.schemas.survey import ManualSurveyPayload
@@ -75,7 +76,10 @@ insert_into_survey_metrics_query = """
 
 
 @router.post("/submit-data-manual")
-def submit_data_manual(payload: ManualSurveyPayload):
+def submit_data_manual(
+    payload: ManualSurveyPayload,
+    claims: dict = Depends(require_permission("write:manual_submit")),
+):
     # Stores the manually entered data into Neon DB
     logger.info("Received manual survey data")
     # extract all the data received from the payload
@@ -155,7 +159,10 @@ def submit_data_manual(payload: ManualSurveyPayload):
 
 
 @router.post("/submit-data-csv")
-async def submit_data_csv(file: UploadFile = File(...)):
+async def submit_data_csv(
+    file: UploadFile = File(...),
+    claims: dict = Depends(require_permission("write:csv_upload")),
+):
     logger.info("Incoming survey file: %s", file.filename)
     if not database_url:
         logger.error("Missing DATABASE_URL")
