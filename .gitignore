@@ -9,6 +9,9 @@ frontend/node_modules/
 *.xlsx
 *.xls
 *.csv
-*.log
+
+
+# ignore log files
+backend-logs/*.log
 
 plan-auth0-write-protection.prompt.md
