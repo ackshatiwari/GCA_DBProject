@@ -73,6 +73,7 @@ STRING_FIELDS = {
 gca_tbl_to_payload_field_mapping = {
     "survey_date": "date",
     "certified_monitor": "name",
+    "site_name": "site_name",
     "site_description": "site_desc",
     "description": "site_desc",
     "name_of_stream": "stream_name",
@@ -255,6 +256,18 @@ def _read_dataframe(file_bytes: bytes, filename: str | None = None) -> pd.DataFr
 
         logger.info("Selected sheet '%s' with score %s. All columns: %s", best_sheet, best_score, list(best_dataframe.columns))
 
+        # Try to find a separate sheet that contains site metadata (site_name, site_desc, stream_name)
+        site_metadata_df = None
+        for sheet_name in excel_file.sheet_names:
+            if sheet_name == best_sheet:
+                continue
+            sheet_df = pd.read_excel(excel_file, sheet_name=sheet_name)
+            mapped_sheet_df = _normalize_and_map_dataframe(sheet_df)
+            if ("site_name" in mapped_sheet_df.columns or "site_desc" in mapped_sheet_df.columns or "stream_name" in mapped_sheet_df.columns) and "site_id" in mapped_sheet_df.columns:
+                site_metadata_df = mapped_sheet_df
+                logger.info("Found site metadata sheet '%s' with site metadata columns", sheet_name)
+                break
+
         # Try to find a separate sheet that contains latitude/longitude and merge it
         coord_sheet = None
         coord_df = None
@@ -297,6 +310,27 @@ def _read_dataframe(file_bytes: bytes, filename: str | None = None) -> pd.DataFr
                     )
             except Exception as exc:
                 logger.warning("Failed to merge coordinate sheet: %s", exc)
+
+        if site_metadata_df is not None:
+            try:
+                columns_to_merge = ["site_id"]
+                if "site_name" in site_metadata_df.columns:
+                    columns_to_merge.append("site_name")
+                if "site_desc" in site_metadata_df.columns:
+                    columns_to_merge.append("site_desc")
+                if "stream_name" in site_metadata_df.columns:
+                    columns_to_merge.append("stream_name")
+
+                if "site_id" in best_dataframe.columns and "site_id" in site_metadata_df.columns:
+                    best_dataframe = best_dataframe.merge(
+                        site_metadata_df[columns_to_merge],
+                        on="site_id",
+                        how="left",
+                        suffixes=("", "_sites")
+                    )
+                    logger.info("Merged site metadata into main sheet using 'site_id'.")
+            except Exception as exc:
+                logger.warning("Failed to merge site metadata sheet: %s", exc)
 
         logger.info("Selected worksheet %s with score %s", best_sheet, best_score)
         return best_dataframe

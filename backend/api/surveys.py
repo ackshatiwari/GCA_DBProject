@@ -289,22 +289,122 @@ def get_survey_coords(
         logger.error("Missing DATABASE_URL")
         raise HTTPException(status_code=500, detail="Database URL not configured")
 
+    conn = None
+    cur = None
     try:
         conn = psycopg2.connect(database_url, connect_timeout=10)
         cur = conn.cursor()
         cur.execute(
             "SELECT id, latitude, longitude, site_id, survey_date, site_name, site_desc, stream_name FROM public.surveys WHERE latitude IS NOT NULL AND longitude IS NOT NULL"
         )
-        coords = [{"id": row[0], "latitude": row[1], "longitude": row[2], "site_id": row[3], "survey_date": row[4], "site_name": row[5], "site_desc": row[6], "stream_name": row[7]} for row in cur.fetchall()]
+        coords = [
+            {
+                "id": row[0],
+                "latitude": row[1],
+                "longitude": row[2],
+                "site_id": row[3],
+                "survey_date": row[4],
+                "site_name": row[5],
+                "site_desc": row[6],
+                "stream_name": row[7],
+            }
+            for row in cur.fetchall()
+        ]
         logger.info("Fetched %s survey coordinates", len(coords))
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
-        cur.close()
-        conn.close()
+        if cur is not None:
+            cur.close()
+        if conn is not None:
+            conn.close()
 
     return {"survey_coords": coords}
 
 
+@router.get("/surveys/site/{site_id}/details")
+def get_survey_details(
+    site_id: int,
+    claims: dict = Depends(require_permission("read:view_data")),
+):
+    database_url = os.getenv("DATABASE_URL")
+    if not database_url:
+        logger.error("Missing DATABASE_URL")
+        raise HTTPException(status_code=500, detail="Database URL not configured")
 
+    conn = None
+    cur = None
+    try:
+        conn = psycopg2.connect(database_url, connect_timeout=10)
+        cur = conn.cursor()
+        # first get the site name, description, and stream name for the site_id
+        cur.execute(
+            "SELECT site_name, site_desc, stream_name FROM public.surveys WHERE site_id = %s ORDER BY survey_date DESC LIMIT 1",
+            (site_id,),
+        )
+        site_info = cur.fetchone()
+        logger.info("Fetched site info for site_id %s: %s", site_id, site_info)
+        if not site_info:
+            logger.warning("Site ID %s not found in surveys table", site_id)
+            raise HTTPException(status_code=404, detail="Site not found")
 
+        # fetch the latest metadata for the field survey, including the
+        # survey_date, flow_rate, stream_depth, stream_width
+        cur.execute(
+            "SELECT survey_date, flow_rate, stream_depth, stream_width FROM public.surveys WHERE site_id = %s ORDER BY survey_date DESC LIMIT 1",
+            (site_id,),
+        )
+        survey_metadata = cur.fetchone()
+        logger.info(
+            "Fetched survey metadata for site_id %s: %s", site_id, survey_metadata
+        )
+        if not survey_metadata:
+            logger.warning("No surveys found for site_id %s", site_id)
+            raise HTTPException(
+                status_code=404, detail="No surveys found for this site"
+            )
+
+        # Get the recent trend rows for that site for all the macro taxa, with the date in ascending order
+        cur.execute(
+            """SELECT s.survey_date, m.organism_name, m.count
+                FROM public.macro_taxa m
+                JOIN public.surveys s ON s.id = m.survey_id
+                WHERE s.site_id = %s
+                ORDER BY s.survey_date ASC
+                """,
+            (site_id,),
+        )
+        macro_taxa_trends = [
+            {"survey_date": row[0], "organism_name": row[1], "count": row[2]}
+            for row in cur.fetchall()
+        ]
+        logger.info(
+            "Fetched %s macro taxa trend rows for site_id %s",
+            len(macro_taxa_trends),
+            site_id,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Error fetching survey details for site_id %s", site_id)
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if cur is not None:
+            cur.close()
+        if conn is not None:
+            conn.close()
+    # return all the data as a single object
+    return {
+        "site_name": site_info[0],
+        "site_desc": site_info[1],
+        "stream_name": site_info[2],
+        "survey_metadata": {
+            "survey_date": survey_metadata[0],
+            "flow_rate": survey_metadata[1],
+            "stream_depth": survey_metadata[2],
+            "stream_width": survey_metadata[3],
+        },
+        "macro_taxa_trends": macro_taxa_trends,
+    }
