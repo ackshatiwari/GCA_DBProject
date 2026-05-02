@@ -5,9 +5,14 @@ function ManualEntryForm() {
     const authenticatedFetch = useAuthenticatedFetch()
     const [form, setForm] = useState({
         site_id: '',
+        site_name: '',
+        site_desc: '',
+        stream_name: '',
         name: '',
         weather: '',
         date: '',
+        latitude: '',
+        longitude: '',
         stream_width: '',
         stream_depth: '',
         flow_rate: '',
@@ -89,9 +94,14 @@ function ManualEntryForm() {
                 <h3>Survey Details</h3>
                 <div className="grid-two">
                     <label> Site ID <input name="site_id" type="text" value={form.site_id} onChange={onInputChange} required /> </label>
+                    <label> Site Name <input name="site_name" type="text" value={form.site_name} onChange={onInputChange} /> </label>
+                    <label> Description <input name="site_desc" type="text" value={form.site_desc} onChange={onInputChange} /> </label>
+                    <label> Name of Stream <input name="stream_name" type="text" value={form.stream_name} onChange={onInputChange} /> </label>
                     <label> Certified Monitor Name <input name="name" type="text" value={form.name} onChange={onInputChange} required /> </label>
                     <label> Weather Conditions <input name="weather" type="text" value={form.weather} onChange={onInputChange} required /> </label>
                     <label> Survey Date <input name="date" type="date" value={form.date} onChange={onInputChange} required /> </label>
+                    <label> Latitude <input name="latitude" type="number" step="any" value={form.latitude} onChange={onInputChange} /> </label>
+                    <label> Longitude <input name="longitude" type="number" step="any" value={form.longitude} onChange={onInputChange} /> </label>
                     <label> Avg. Stream Width <input name="stream_width" type="text" value={form.stream_width} onChange={onInputChange} /> </label>
                     <label> Avg. Stream Depth <input name="stream_depth" type="text" value={form.stream_depth} onChange={onInputChange} /> </label>
                     <label> Flow Rate <input name="flow_rate" type="text" value={form.flow_rate} onChange={onInputChange} /> </label>

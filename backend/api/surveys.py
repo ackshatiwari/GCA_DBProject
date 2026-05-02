@@ -11,8 +11,6 @@ import psycopg2
 router = APIRouter(prefix="/api", tags=["surveys"])
 logger = get_file_logger("backend.api.surveys", "csv_import.log")
 
-database_url = os.getenv("DATABASE_URL")
-
 MACRO_TAXA_FIELDS = [
     "worms",
     "flatworms",
@@ -55,8 +53,8 @@ METRIC_FIELDS = [
 ]
 
 insert_into_surveys_query = """
-            INSERT INTO public.surveys ( certified_monitor_name, weather_conditions, survey_date, stream_width, stream_depth, flow_rate, sampling_notes, created_at, site_id )
-            VALUES ( %s, %s, %s, %s, %s, %s, %s, NOW(), %s )
+            INSERT INTO public.surveys ( site_name, site_desc, stream_name, certified_monitor_name, weather_conditions, survey_date, latitude, longitude, stream_width, stream_depth, flow_rate, sampling_notes, created_at, site_id )
+            VALUES ( %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), %s )
             RETURNING id;
         """
 
@@ -84,14 +82,24 @@ def submit_data_manual(
     logger.info("Received manual survey data")
     # extract all the data received from the payload
 
+    database_url = os.getenv("DATABASE_URL")
+    if not database_url:
+        logger.error("Missing DATABASE_URL")
+        raise HTTPException(status_code=500, detail="Database URL not configured")
+
     conn = psycopg2.connect(database_url)
     try:
         cur = conn.cursor()
 
         survey_values = (
+            payload.site_name,
+            payload.site_desc,
+            payload.stream_name,
             payload.name,
             payload.weather,
             payload.date,
+            payload.latitude,
+            payload.longitude,
             payload.stream_width,
             payload.stream_depth,
             payload.flow_rate,
@@ -112,7 +120,9 @@ def submit_data_manual(
         for organism_name in MACRO_TAXA_FIELDS:
             count = payload_data.get(organism_name)
             if count in (None, ""):
-                logger.info("Skipping macro taxa field %s: empty or missing", organism_name)
+                logger.info(
+                    "Skipping macro taxa field %s: empty or missing", organism_name
+                )
                 continue
             logger.info(
                 "Inserting macro taxa field %s with count %s and survey_id %s",
@@ -163,6 +173,7 @@ async def submit_data_csv(
     file: UploadFile = File(...),
     claims: dict = Depends(require_permission("write:csv_upload")),
 ):
+    database_url = os.getenv("DATABASE_URL")
     logger.info("Incoming survey file: %s", file.filename)
     if not database_url:
         logger.error("Missing DATABASE_URL")
@@ -171,7 +182,8 @@ async def submit_data_csv(
     if not file.filename or not file.filename.lower().endswith((".csv", ".xlsx")):
         logger.warning("Invalid file extension: %s", file.filename)
         raise HTTPException(
-            status_code=400, detail="Invalid file type. Please upload a CSV or .xlsx Excel file."
+            status_code=400,
+            detail="Invalid file type. Please upload a CSV or .xlsx Excel file.",
         )
 
     try:
@@ -182,19 +194,32 @@ async def submit_data_csv(
     except ValueError as ve:
         logger.warning("File processing error: %s", ve)
         raise HTTPException(status_code=400, detail=str(ve))
-    
-    conn = psycopg2.connect(database_url)
+
+    try:
+        conn = psycopg2.connect(database_url, connect_timeout=10)
+        logger.info("Database connection opened successfully")
+    except psycopg2.OperationalError as db_err:
+        logger.error("Database connection failed: %s", str(db_err))
+        raise HTTPException(
+            status_code=503, detail=f"Database connection failed: {str(db_err)}"
+        )
+
     inserted_survey_ids = []
-    
+
     try:
         cur = conn.cursor()
-        logger.info("Database connection opened")
+        logger.info("Cursor created")
 
         for payload in survey_payloads:
             survey_values = (
+                payload.site_name,
+                payload.site_desc,
+                payload.stream_name,
                 payload.name,
                 payload.weather,
                 payload.date,
+                payload.latitude,
+                payload.longitude,
                 payload.stream_width,
                 payload.stream_depth,
                 payload.flow_rate,
@@ -228,7 +253,7 @@ async def submit_data_csv(
                     insert_into_collection_times_query,
                     (survey_id, collection_time_name, collection_time),
                 )
-            
+
             for metric_name in METRIC_FIELDS:
                 value = payload_data.get(metric_name)
                 if value in (None, ""):
@@ -237,7 +262,7 @@ async def submit_data_csv(
                     insert_into_survey_metrics_query,
                     (survey_id, metric_name, float(value)),
                 )
-            
+
             conn.commit()
             logger.info("Committed survey id: %s", survey_id)
     except Exception as e:
@@ -248,10 +273,38 @@ async def submit_data_csv(
         cur.close()
         conn.close()
         logger.info("Database connection closed")
-    
+
     logger.info("Completed import. Total inserted: %s", len(inserted_survey_ids))
     return {
         "message": f"Successfully processed {len(inserted_survey_ids)} surveys from CSV",
     }
+
+
+@router.get("/surveys/coords")
+def get_survey_coords(
+    claims: dict = Depends(require_permission("read:view_data")),
+):
+    database_url = os.getenv("DATABASE_URL")
+    if not database_url:
+        logger.error("Missing DATABASE_URL")
+        raise HTTPException(status_code=500, detail="Database URL not configured")
+
+    try:
+        conn = psycopg2.connect(database_url, connect_timeout=10)
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT id, latitude, longitude, site_id, survey_date, site_name, site_desc, stream_name FROM public.surveys WHERE latitude IS NOT NULL AND longitude IS NOT NULL"
+        )
+        coords = [{"id": row[0], "latitude": row[1], "longitude": row[2], "site_id": row[3], "survey_date": row[4], "site_name": row[5], "site_desc": row[6], "stream_name": row[7]} for row in cur.fetchall()]
+        logger.info("Fetched %s survey coordinates", len(coords))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cur.close()
+        conn.close()
+
+    return {"survey_coords": coords}
+
+
 
 

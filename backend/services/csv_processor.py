@@ -21,6 +21,8 @@ REQUIRED_FIELDS = {
 
 NUMERIC_FIELDS = {
     "site_id",
+    "latitude",
+    "longitude",
     "stream_width",
     "stream_depth",
     "collection_time_1",
@@ -57,13 +59,31 @@ NUMERIC_FIELDS = {
     "metric_6",
 }
 
-STRING_FIELDS = {"name", "flow_rate", "weather", "date", "sampling_notes"}
+STRING_FIELDS = {
+    "site_name",
+    "site_desc",
+    "stream_name",
+    "name",
+    "flow_rate",
+    "weather",
+    "date",
+    "sampling_notes",
+}
 
 gca_tbl_to_payload_field_mapping = {
     "survey_date": "date",
     "certified_monitor": "name",
+    "site_description": "site_desc",
+    "description": "site_desc",
+    "name_of_stream": "stream_name",
+    "stream": "stream_name",
     "weather_conditions_today": "weather",
     "weather_last_72_hours": "weather",
+    "latitude_measure": "latitude",
+    "latitude_m": "latitude",
+    "latitude": "latitude",
+    "longitude_measure": "longitude",
+    "longitude": "longitude",
     "average_stream_width": "stream_width",
     "average_stream_depth": "stream_depth",
     "collection_time_net1": "collection_time_1",
@@ -79,6 +99,21 @@ def _normalize_and_map_dataframe(dataframe: pd.DataFrame) -> pd.DataFrame:
     }
     dataframe = dataframe.rename(columns=normalized_columns)
     dataframe = dataframe.rename(columns=gca_tbl_to_payload_field_mapping)
+
+    
+    if len(dataframe.columns) != len(set(dataframe.columns)):
+        duplicate_cols = [col for col in dataframe.columns if list(dataframe.columns).count(col) > 1]
+        logger.info("Detected duplicate columns after mapping: %s", duplicate_cols)
+        
+        for col_name in set(duplicate_cols):
+            col_indices = [i for i, c in enumerate(dataframe.columns) if c == col_name]
+            if len(col_indices) > 1:
+                for idx in col_indices[1:]:
+                    mask = dataframe.iloc[:, col_indices[0]].isna()
+                    dataframe.iloc[mask, col_indices[0]] = dataframe.iloc[mask, idx]
+        
+        dataframe = dataframe.loc[:, ~dataframe.columns.duplicated(keep='first')]
+        logger.info("Deduplicated columns. Remaining: %s", list(dataframe.columns))
 
     if (
         "weather" not in dataframe.columns
@@ -186,17 +221,29 @@ def _read_dataframe(file_bytes: bytes, filename: str | None = None) -> pd.DataFr
         anchor_fields = {
             "date",
             "site_id",
+            "site_name",
+            "site_desc",
+            "stream_name",
             "name",
             "weather",
+            "latitude",
+            "longitude",
             "stream_width",
             "sampling_notes",
         }
 
         for sheet_name in excel_file.sheet_names:
             dataframe = pd.read_excel(excel_file, sheet_name=sheet_name)
+            logger.info("Sheet '%s' raw columns: %s", sheet_name, list(dataframe.columns))
             mapped_dataframe = _normalize_and_map_dataframe(dataframe)
             mapped_headers = set(mapped_dataframe.columns)
+            logger.info("Sheet '%s' normalized columns: %s", sheet_name, list(mapped_headers))
             score = len(mapped_headers & anchor_fields)
+            logger.info("Sheet '%s' anchor field matches (score %s): %s", sheet_name, score, list(mapped_headers & anchor_fields))
+
+            if "date" in mapped_headers:
+                score += 1000
+                logger.info("Sheet '%s' has date column, bonus applied. New score: %s", sheet_name, score)
 
             if score > best_score:
                 best_score = score
@@ -205,6 +252,51 @@ def _read_dataframe(file_bytes: bytes, filename: str | None = None) -> pd.DataFr
 
         if best_dataframe is None or best_score < 2:
             raise ValueError("No worksheet appears to contain survey data")
+
+        logger.info("Selected sheet '%s' with score %s. All columns: %s", best_sheet, best_score, list(best_dataframe.columns))
+
+        # Try to find a separate sheet that contains latitude/longitude and merge it
+        coord_sheet = None
+        coord_df = None
+        for sheet_name in excel_file.sheet_names:
+            if sheet_name == best_sheet:
+                continue
+            sheet_df = pd.read_excel(excel_file, sheet_name=sheet_name)
+            mapped_sheet_df = _normalize_and_map_dataframe(sheet_df)
+            if "latitude" in mapped_sheet_df.columns and "longitude" in mapped_sheet_df.columns:
+                coord_sheet = sheet_name
+                coord_df = mapped_sheet_df
+                logger.info("Found coordinate sheet '%s' with latitude/longitude columns", coord_sheet)
+                break
+
+        if coord_df is not None:
+            # Merge coords into best_dataframe. Prefer join on site_id, then name, else by index if lengths match.
+            try:
+                if "site_id" in best_dataframe.columns and "site_id" in coord_df.columns:
+                    best_dataframe = best_dataframe.merge(
+                        coord_df[["site_id", "latitude", "longitude"]],
+                        on="site_id",
+                        how="left",
+                    )
+                    logger.info("Merged coordinates into main sheet using 'site_id'.")
+                elif "name" in best_dataframe.columns and "name" in coord_df.columns:
+                    best_dataframe = best_dataframe.merge(
+                        coord_df[["name", "latitude", "longitude"]],
+                        on="name",
+                        how="left",
+                    )
+                    logger.info("Merged coordinates into main sheet using 'name'.")
+                elif len(coord_df) == len(best_dataframe):
+                    best_dataframe = best_dataframe.copy()
+                    best_dataframe["latitude"] = coord_df["latitude"].values
+                    best_dataframe["longitude"] = coord_df["longitude"].values
+                    logger.info("Assigned coordinates to main sheet by row index (equal lengths).")
+                else:
+                    logger.info(
+                        "Found coordinate sheet but could not reliably merge (no matching key and differing lengths)."
+                    )
+            except Exception as exc:
+                logger.warning("Failed to merge coordinate sheet: %s", exc)
 
         logger.info("Selected worksheet %s with score %s", best_sheet, best_score)
         return best_dataframe

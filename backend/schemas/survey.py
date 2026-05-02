@@ -3,9 +3,14 @@ from pydantic import BaseModel
 
 class ManualSurveyPayload(BaseModel):
     site_id: int | None = None
+    site_name: str | None = None
+    site_desc: str | None = None
+    stream_name: str | None = None
     name: str
     weather: str
     date: str
+    latitude: float | None = None
+    longitude: float | None = None
     stream_width: float | None = None
     stream_depth: float | None = None
     flow_rate: float | str | None = None

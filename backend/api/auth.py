@@ -10,7 +10,7 @@ from jose import JWTError, jwt
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
-
+# get env vars at module load time to fail fast if missing
 def _get_env(name: str) -> str:
 	value = os.getenv(name)
 	if not value:
@@ -18,6 +18,7 @@ def _get_env(name: str) -> str:
 	return value
 
 
+# Cache auth settings and JWKS to avoid repeated network calls on each request
 @lru_cache
 def _auth_settings():
 	domain = _get_env("AUTH0_DOMAIN")
@@ -34,16 +35,22 @@ def _auth_settings():
 	}
 
 
+# The following functions implement JWT validation and permission checks using Auth0.
 @lru_cache
 def _get_jwks():
 	settings = _auth_settings()
 	with urlopen(settings["jwks_url"]) as response:
 		return json.loads(response.read())
 
-
+# This function extracts and validates the JWT from the Authorization header,
+#  checks its signature, and returns the claims if valid. If the token is missing,
+#  invalid, or does not have the required permissions, it raises an appropriate 
+# HTTPException. The require_permission function is a dependency that can be used
+#  in FastAPI routes to enforce specific permissions based on the claims in the JWT.
 def get_current_claims(
 	credentials: HTTPAuthorizationCredentials = Security(bearer_scheme),
 ):
+	# Check if the Authorization header is present and properly formatted
 	if credentials is None or credentials.scheme.lower() != "bearer":
 		raise HTTPException(
 			status_code=status.HTTP_401_UNAUTHORIZED,
@@ -53,6 +60,7 @@ def get_current_claims(
 	token = credentials.credentials
 	settings = _auth_settings()
 
+	# Decode the token header to get the key ID (kid) for signature verification
 	try:
 		unverified_header = jwt.get_unverified_header(token)
 	except JWTError:
@@ -61,6 +69,7 @@ def get_current_claims(
 			detail="Invalid token header",
 		)
 
+	# Find the RSA key in the JWKS that matches the kid from the token header
 	jwks = _get_jwks()
 	rsa_key = {}
 	for key in jwks.get("keys", []):
