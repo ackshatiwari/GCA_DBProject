@@ -20,7 +20,8 @@ def test_get_survey_details_reads_real_data(capsys):
 		pytest.skip("DATABASE_URL is not set")
 
 	result = surveys.get_survey_details(site_id=SITE_ID, claims={})
-	print(result)
+	
+	print(result.macro_taxa_trends)
 
 	captured = capsys.readouterr()
 	assert captured.out.strip() != ""

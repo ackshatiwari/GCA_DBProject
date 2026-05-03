@@ -75,6 +75,19 @@ function ViewData() {
     markersRef.current.forEach((marker) => marker.remove())
     markersRef.current = []
 
+    // defines a method that groups macro taxa data by survey date
+    const groupMacroTaxaByDate = (macroTaxaTrends) => {
+      const groupedData = {}
+      macroTaxaTrends.forEach((entry) => {
+        const date = entry.survey_date
+        if (!groupedData[date]) {
+          groupedData[date] = []
+        }
+        groupedData[date].push(entry)
+      })
+      return groupedData
+    }
+
     coordinates.forEach((point) => {
       if (point.latitude == null || point.longitude == null) {
         return
@@ -84,17 +97,37 @@ function ViewData() {
         .setLngLat([Number(point.longitude), Number(point.latitude)])
         .addTo(mapRef.current)
 
-      // Placeholder for marker click event to show site details in the side panel
       marker.getElement().addEventListener('click', () => {
-        alert(
-          `Site ID: ${point.site_id}\nSite Name: ${point.site_name || ''}\nDescription: ${point.site_desc || ''}\nName of Stream: ${point.stream_name || ''}\nLatitude: ${point.latitude}\nLongitude: ${point.longitude}`,
-        )
+
+
+        // call the /surveys/site/{site_id}/details endpoint
+        const fetchSiteDetails = async () => {
+          try {
+            const response = await authenticatedFetch(`/api/surveys/site/${point.site_id}/details`)
+            if (!response.ok) {
+              throw new Error('Failed to load site details')
+            }
+            const data = await response.json()
+            document.getElementById('site-name').textContent = `Site Name: ${data.site_name || 'N/A'}`
+            document.getElementById('site-description').textContent = `Description: ${data.site_desc || 'N/A'}`
+            document.getElementById('site-stream-name').textContent = `Name of Stream: ${data.stream_name || 'N/A'}`
+            document.getElementById('site-coordinates').textContent = `Coordinates: ${point.latitude}, ${point.longitude}`
+            document.getElementById('site-survey-metadata').textContent = `Survey Metadata: Flow Rate - ${data.survey_metadata.flow_rate || 'N/A'}, Stream Depth - ${data.survey_metadata.stream_depth || 'N/A'}, Stream Width - ${data.survey_metadata.stream_width || 'N/A'}, Survey Date - ${data.survey_metadata.survey_date || 'N/A'}`;
+            // right now just print the JSON response fpor the macro taxa trends to the console, we can add a chart later
+            console.log('Macro Taxa Trends:', groupMacroTaxaByDate(data.macro_taxa_trends))
+          } catch (error) {
+            console.error('Error fetching site details:', error)
+          }
+        }
+
+        fetchSiteDetails()
       })
-      
+
 
       markersRef.current.push(marker)
     })
   }, [coordinates])
+
 
   return (
     <section className="view-data-shell">
@@ -109,7 +142,26 @@ function ViewData() {
         </div>
         <div className="data-panel-placeholder">
           <h2>Site Details</h2>
-          <p>This panel will display the selected site, coordinates, recent readings, and chart summaries.</p>
+          <div className="site-row">
+            <div className="site-label">Site</div>
+            <div id="site-name" className="site-value"></div>
+          </div>
+          <div className="site-row">
+            <div className="site-label">Stream</div>
+            <div id="site-stream-name" className="site-value"></div>
+          </div>
+          <div className="site-row">
+            <div className="site-label">Coordinates</div>
+            <div id="site-coordinates" className="site-value"></div>
+          </div>
+          <div className="site-row">
+            <div className="site-label">Description</div>
+            <div id="site-description" className="site-value site-desc"></div>
+          </div>
+          <div className="site-row">
+            <div className="site-label">Survey</div>
+            <div id="site-survey-metadata" className="site-value"></div>
+          </div>
         </div>
       </div>
     </section>
