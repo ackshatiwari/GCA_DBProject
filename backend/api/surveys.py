@@ -53,8 +53,8 @@ METRIC_FIELDS = [
 ]
 
 insert_into_surveys_query = """
-            INSERT INTO public.surveys ( site_name, site_desc, stream_name, certified_monitor_name, weather_conditions, survey_date, latitude, longitude, stream_width, stream_depth, flow_rate, sampling_notes, created_at, site_id )
-            VALUES ( %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), %s )
+            INSERT INTO public.surveys ( site_name, site_desc, stream_name, certified_monitor_name, weather_conditions, survey_date, latitude, longitude, stream_width, stream_depth, flow_rate, sampling_notes, created_at, site_id, survey_id )
+            VALUES ( %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), %s, %s )
             RETURNING id;
         """
 
@@ -105,6 +105,7 @@ def submit_data_manual(
             payload.flow_rate,
             payload.sampling_notes,
             payload.site_id,
+            payload.survey_id,
         )
 
         cur.execute(
@@ -225,6 +226,7 @@ async def submit_data_csv(
                 payload.flow_rate,
                 payload.sampling_notes,
                 payload.site_id,
+                payload.survey_id,
             )
 
             cur.execute(

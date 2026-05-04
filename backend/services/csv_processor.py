@@ -21,6 +21,7 @@ REQUIRED_FIELDS = {
 
 NUMERIC_FIELDS = {
     "site_id",
+    "survey_id",
     "latitude",
     "longitude",
     "stream_width",
@@ -91,6 +92,7 @@ gca_tbl_to_payload_field_mapping = {
     "collection_time_net2": "collection_time_2",
     "collection_time_net3": "collection_time_3",
     "collection_time_net4": "collection_time_4",
+    "id": "survey_id",
 }
 
 

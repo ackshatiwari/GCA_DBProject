@@ -3,6 +3,7 @@ from pydantic import BaseModel
 
 class ManualSurveyPayload(BaseModel):
     site_id: int | None = None
+    survey_id: int | None = None
     site_name: str | None = None
     site_desc: str | None = None
     stream_name: str | None = None
