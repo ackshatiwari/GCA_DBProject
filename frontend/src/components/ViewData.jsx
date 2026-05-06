@@ -1,8 +1,35 @@
 import { useEffect, useRef, useState } from 'react'
+import { RechartsDevtools } from '@recharts/devtools';
+import { Line, LineChart } from 'recharts';
 import mapboxgl from 'mapbox-gl'
 import { useAuthenticatedFetch } from '../api/client'
 import '../styles/ViewData.css'
 import 'mapbox-gl/dist/mapbox-gl.css'
+
+const MACRO_TAXA_OPTIONS = [
+  'worms',
+  'flatworms',
+  'leeches',
+  'crayfish',
+  'sowbugs',
+  'scuds',
+  'stoneflies',
+  'mayflies',
+  'dragonflies',
+  'damselflies',
+  'hellgrammites',
+  'fishflies',
+  'alderflies',
+  'common_netspinners',
+  'most_caddisflies',
+  'beetles',
+  'midges',
+  'blackflies',
+  'most_true_flies',
+  'gilled_snails',
+  'lunged_snails',
+  'clams',
+]
 
 
 function ViewData() {
@@ -165,8 +192,19 @@ function ViewData() {
           {/** Div for graphs for each macro organism, with a select dropdown for the water bug you want to view, with trends */}
           <div className="site-row">
             <div className="site-label">Macroinvertebrate Trends</div>
+            <div className='site-label'>Select Macroinvertebrate:
+              <select id="macro-select" name="macro-select">
+                <option value="">-- Select --</option>
+                {MACRO_TAXA_OPTIONS.map((macro) => (
+                  <option key={macro} value={macro}>
+                    {macro.replaceAll('_', ' ')}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div id="macro-trends" className="site-value">
-              <p>Macroinvertebrate trends charts will go here.</p>
+              {/* Placeholder for macroinvertebrate trends graph */}
+
             </div>
           </div>
         </div>
