@@ -162,6 +162,13 @@ function ViewData() {
             <div className="site-label">Survey</div>
             <div id="site-survey-metadata" className="site-value"></div>
           </div>
+          {/** Div for graphs for each macro organism, with a select dropdown for the water bug you want to view, with trends */}
+          <div className="site-row">
+            <div className="site-label">Macroinvertebrate Trends</div>
+            <div id="macro-trends" className="site-value">
+              <p>Macroinvertebrate trends charts will go here.</p>
+            </div>
+          </div>
         </div>
       </div>
     </section>

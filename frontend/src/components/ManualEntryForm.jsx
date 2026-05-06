@@ -4,6 +4,7 @@ import { useAuthenticatedFetch } from '../api/client'
 function ManualEntryForm() {
     const authenticatedFetch = useAuthenticatedFetch()
     const [form, setForm] = useState({
+        survey_id: '',
         site_id: '',
         site_name: '',
         site_desc: '',
@@ -93,6 +94,7 @@ function ManualEntryForm() {
             <section className="field-group">
                 <h3>Survey Details</h3>
                 <div className="grid-two">
+                    <label> Survey ID <input name="survey_id" type="text" value={form.survey_id} onChange={onInputChange} /> </label>
                     <label> Site ID <input name="site_id" type="text" value={form.site_id} onChange={onInputChange} required /> </label>
                     <label> Site Name <input name="site_name" type="text" value={form.site_name} onChange={onInputChange} /> </label>
                     <label> Description <input name="site_desc" type="text" value={form.site_desc} onChange={onInputChange} /> </label>
