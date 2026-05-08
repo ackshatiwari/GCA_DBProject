@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { RechartsDevtools } from '@recharts/devtools';
-import { Line, LineChart } from 'recharts';
+import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts';
+import { createRoot } from 'react-dom/client'
 import mapboxgl from 'mapbox-gl'
 import { useAuthenticatedFetch } from '../api/client'
 import '../styles/ViewData.css'
@@ -36,10 +37,13 @@ function ViewData() {
   const mapRef = useRef(null)
   const mapContainerRef = useRef(null)
   const markersRef = useRef([])
+  const chartRootRef = useRef(null)
+  const activeSiteMacroTrendsRef = useRef([])
   const [coordinates, setCoordinates] = useState([])
   const [mapError, setMapError] = useState(null)
   const authenticatedFetch = useAuthenticatedFetch()
 
+  // Load site coordinates on component mount
   useEffect(() => {
     let isMounted = true
 
@@ -89,7 +93,23 @@ function ViewData() {
     return () => {
       markersRef.current.forEach((marker) => marker.remove())
       markersRef.current = []
+      chartRootRef.current?.unmount()
+      chartRootRef.current = null
       mapRef.current?.remove()
+    }
+  }, [])
+
+  useEffect(() => {
+    const multiSelectToggle = document.getElementById('multi-select-toggle')
+    
+    const handleToggleClick = () => {
+      console.log('Multi-select toggle clicked - functionality not implemented yet')
+    }
+    
+    multiSelectToggle?.addEventListener('click', handleToggleClick)
+    
+    return () => {
+      multiSelectToggle?.removeEventListener('click', handleToggleClick)
     }
   }, [])
 
@@ -102,18 +122,96 @@ function ViewData() {
     markersRef.current.forEach((marker) => marker.remove())
     markersRef.current = []
 
-    // defines a method that groups macro taxa data by survey date
-    const groupMacroTaxaByDate = (macroTaxaTrends) => {
-      const groupedData = {}
-      macroTaxaTrends.forEach((entry) => {
-        const date = entry.survey_date
-        if (!groupedData[date]) {
-          groupedData[date] = []
-        }
-        groupedData[date].push(entry)
-      })
-      return groupedData
+    // Helper function to extract year from survey date
+    const getSurveyYear = (surveyDate) => {
+      if (!surveyDate) {
+        return 'Unknown'
+      }
+
+      return String(surveyDate).slice(0, 4)
     }
+
+    // Function to build trends data for the selected macroinvertebrate
+    const buildYearlyTrendsData = (macroTaxaTrends, selectedMacro) => {
+      const groupedData = {}
+      // Group counts by year and macroinvertebrate
+      macroTaxaTrends.forEach((entry) => {
+        const year = getSurveyYear(entry.survey_date)
+        const count = Number(entry.count || 0)
+
+        if (!groupedData[year]) {
+          groupedData[year] = {
+            total: 0,
+            byMacro: {},
+          }
+        }
+
+        groupedData[year].total += count
+        groupedData[year].byMacro[entry.organism_name] = (groupedData[year].byMacro[entry.organism_name] || 0) + count
+      })
+
+      // Transform grouped data into an array sorted by year
+      return Object.entries(groupedData)
+        .sort(([yearA], [yearB]) => Number(yearA) - Number(yearB)) // Sort by year ascending
+        .map(([year, counts]) => ({
+          year,
+          count: selectedMacro ? (counts.byMacro[selectedMacro] || 0) : counts.total,
+        }))
+    }
+
+    // Function to render the trends chart for the selected macroinvertebrate
+    const renderTrendsChart = (trendsData, selectedMacro) => {
+      const chartContainer = document.getElementById('macro-trends')
+      const chartTitle = document.getElementById('macro-trends-title')
+
+      console.log("Rendering trends chart with data:", trendsData)
+      if (!chartContainer || !chartTitle) {
+        return
+      }
+
+      const titleText = selectedMacro
+        ? `Bugs counted per year for ${selectedMacro.replaceAll('_', ' ')}`
+        : 'Total bugs counted per year (all bug types)'
+      chartTitle.textContent = titleText
+
+      if (trendsData.length === 0) {
+        if (!chartRootRef.current) {
+          chartRootRef.current = createRoot(chartContainer)
+        }
+        chartRootRef.current.render(<p>No macroinvertebrate data available for this site.</p>)
+        return
+      }
+
+      const lineChart = (
+        <ResponsiveContainer width="100%" height={360}>
+          <LineChart data={trendsData}>
+            <XAxis dataKey="year" />
+            <YAxis allowDecimals={false} />
+            <CartesianGrid stroke="#aaa" strokeDasharray="5 5" />
+            <Line type="monotone" dataKey="count" stroke="#8884d8" />
+            <Tooltip defaultIndex={2} />
+          </LineChart>
+        </ResponsiveContainer>
+      )
+
+      if (!chartRootRef.current) {
+        chartRootRef.current = createRoot(chartContainer)
+      }
+      chartRootRef.current.render(lineChart)
+    }
+
+    const macroSelectElement = document.getElementById('macro-select')
+
+    const handleMacroSelectChange = (event) => {
+      const selectedMacro = event.target.value
+      const trendsData = buildYearlyTrendsData(activeSiteMacroTrendsRef.current, selectedMacro)
+      console.log("Trends data for selected macro:", trendsData)
+      renderTrendsChart(trendsData, selectedMacro)
+    }
+
+    
+
+    macroSelectElement?.addEventListener('change', handleMacroSelectChange)
 
     coordinates.forEach((point) => {
       if (point.latitude == null || point.longitude == null) {
@@ -140,8 +238,10 @@ function ViewData() {
             document.getElementById('site-stream-name').textContent = `Name of Stream: ${data.stream_name || 'N/A'}`
             document.getElementById('site-coordinates').textContent = `Coordinates: ${point.latitude}, ${point.longitude}`
             document.getElementById('site-survey-metadata').textContent = `Survey Metadata: Flow Rate - ${data.survey_metadata.flow_rate || 'N/A'}, Stream Depth - ${data.survey_metadata.stream_depth || 'N/A'}, Stream Width - ${data.survey_metadata.stream_width || 'N/A'}, Survey Date - ${data.survey_metadata.survey_date || 'N/A'}`;
-            // right now just print the JSON response fpor the macro taxa trends to the console, we can add a chart later
-            console.log('Macro Taxa Trends:', groupMacroTaxaByDate(data.macro_taxa_trends))
+            activeSiteMacroTrendsRef.current = data.macro_taxa_trends || []
+            const selectedMacro = document.getElementById('macro-select')?.value || ''
+            const trendsData = buildYearlyTrendsData(activeSiteMacroTrendsRef.current, selectedMacro)
+            renderTrendsChart(trendsData, selectedMacro)
           } catch (error) {
             console.error('Error fetching site details:', error)
           }
@@ -150,9 +250,12 @@ function ViewData() {
         fetchSiteDetails()
       })
 
-
       markersRef.current.push(marker)
     })
+
+    return () => {
+      macroSelectElement?.removeEventListener('change', handleMacroSelectChange)
+    }
   }, [coordinates])
 
 
@@ -190,25 +293,36 @@ function ViewData() {
             <div id="site-survey-metadata" className="site-value"></div>
           </div>
           {/** Div for graphs for each macro organism, with a select dropdown for the water bug you want to view, with trends */}
-          <div className="site-row">
-            <div className="site-label">Macroinvertebrate Trends</div>
-            <div className='site-label'>Select Macroinvertebrate:
-              <select id="macro-select" name="macro-select">
-                <option value="">-- Select --</option>
-                {MACRO_TAXA_OPTIONS.map((macro) => (
-                  <option key={macro} value={macro}>
-                    {macro.replaceAll('_', ' ')}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div id="macro-trends" className="site-value">
-              {/* Placeholder for macroinvertebrate trends graph */}
 
-            </div>
-          </div>
         </div>
       </div>
+
+      <section className="macro-trends-fullwidth">
+        <div className="macro-trends-card">
+          <div className="macro-header">
+            <h2>Macroinvertebrate Trends</h2>
+            <div className="macro-controls">
+              <label htmlFor="macro-select" className="macro-select-label">Select Macroinvertebrate</label>
+              <div className="macro-select-wrapper">
+                <select id="macro-select" name="macro-select" className="macro-select">
+                  <option value="">All species (total)</option>
+                  {MACRO_TAXA_OPTIONS.map((macro) => (
+                    <option key={macro} value={macro}>
+                      {macro.replaceAll('_', ' ')}
+                    </option>
+                  ))}
+                </select>
+                <p className="macro-select-description" id="multi-select-toggle">
+                  Multi-select
+                </p>
+              </div>
+            </div>
+          </div>
+          <div id="macro-trends-title" className="macro-trends-title"></div>
+          <div id="macro-trends" className="macro-trends-graph" aria-live="polite"></div>
+        </div>
+      </section>
+
     </section>
   )
 }
