@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { RechartsDevtools } from '@recharts/devtools';
 import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts';
+import MultiSelect from './Multi-Select'
 import { createRoot } from 'react-dom/client'
 import mapboxgl from 'mapbox-gl'
 import { useAuthenticatedFetch } from '../api/client'
@@ -41,7 +42,68 @@ function ViewData() {
   const activeSiteMacroTrendsRef = useRef([])
   const [coordinates, setCoordinates] = useState([])
   const [mapError, setMapError] = useState(null)
+  const [selectedSpecies, setSelectedSpecies] = useState([])
+  const [isMultiSelectOpen, setIsMultiSelectOpen] = useState(false)
   const authenticatedFetch = useAuthenticatedFetch()
+
+
+  // applies the multi-select filters to trend charts
+  const handleApplyFilters = () => {
+    console.log('Selected species:', selectedSpecies)
+
+    const chartContainer = document.getElementById('macro-trends')
+    const chartTitle = document.getElementById('macro-trends-title')
+    if (!chartContainer || !chartTitle) {
+      return
+    }
+
+    // Build combined data structure with all selected species
+    const groupedData = {}
+    activeSiteMacroTrendsRef.current.forEach((entry) => {
+      const year = String(entry.survey_date).slice(0, 4)
+      if (!groupedData[year]) {
+        groupedData[year] = { year }
+        selectedSpecies.forEach(species => {
+          groupedData[year][species] = 0
+        })
+      }
+      if (selectedSpecies.includes(entry.organism_name)) {
+        groupedData[year][entry.organism_name] += Number(entry.count || 0)
+      }
+    })
+
+    const trendsData = Object.values(groupedData).sort((a, b) => Number(a.year) - Number(b.year))
+    console.log('Combined trends data:', trendsData)
+
+    chartTitle.textContent = `Bugs counted per year for ${selectedSpecies.map(s => s.replaceAll('_', ' ')).join(', ')}`
+
+    // Unmount old root and clear
+    if (chartRootRef.current) {
+      chartRootRef.current.unmount()
+      chartRootRef.current = null
+    }
+
+    chartContainer.innerHTML = ''
+    chartRootRef.current = createRoot(chartContainer)
+
+    const colors = ['#8884d8', '#82ca9d', '#ffc658', '#ff7c7c', '#8dd1e1', '#d084d0', '#ffa726', '#66bb6a', '#ec407a', '#29b6f6']
+    
+    const lineChart = (
+      <ResponsiveContainer width="100%" height={360}>
+        <LineChart data={trendsData}>
+          <XAxis dataKey="year" />
+          <YAxis allowDecimals={false} />
+          <CartesianGrid stroke="#aaa" strokeDasharray="5 5" />
+          {selectedSpecies.map((species, idx) => (
+            <Line key={species} type="monotone" dataKey={species} stroke={colors[idx % colors.length]} name={species.replaceAll('_', ' ')} />
+          ))}
+          <Tooltip />
+        </LineChart>
+      </ResponsiveContainer>
+    )
+
+    chartRootRef.current.render(lineChart)
+  }
 
   // Load site coordinates on component mount
   useEffect(() => {
@@ -96,20 +158,6 @@ function ViewData() {
       chartRootRef.current?.unmount()
       chartRootRef.current = null
       mapRef.current?.remove()
-    }
-  }, [])
-
-  useEffect(() => {
-    const multiSelectToggle = document.getElementById('multi-select-toggle')
-    
-    const handleToggleClick = () => {
-      console.log('Multi-select toggle clicked - functionality not implemented yet')
-    }
-    
-    multiSelectToggle?.addEventListener('click', handleToggleClick)
-    
-    return () => {
-      multiSelectToggle?.removeEventListener('click', handleToggleClick)
     }
   }, [])
 
@@ -174,10 +222,17 @@ function ViewData() {
         : 'Total bugs counted per year (all bug types)'
       chartTitle.textContent = titleText
 
+      // Unmount the old root if it exists
+      if (chartRootRef.current) {
+        chartRootRef.current.unmount()
+        chartRootRef.current = null
+      }
+
+      // Clear container and create fresh root
+      chartContainer.innerHTML = ''
+      chartRootRef.current = createRoot(chartContainer)
+
       if (trendsData.length === 0) {
-        if (!chartRootRef.current) {
-          chartRootRef.current = createRoot(chartContainer)
-        }
         chartRootRef.current.render(<p>No macroinvertebrate data available for this site.</p>)
         return
       }
@@ -194,9 +249,6 @@ function ViewData() {
         </ResponsiveContainer>
       )
 
-      if (!chartRootRef.current) {
-        chartRootRef.current = createRoot(chartContainer)
-      }
       chartRootRef.current.render(lineChart)
     }
 
@@ -209,7 +261,7 @@ function ViewData() {
       renderTrendsChart(trendsData, selectedMacro)
     }
 
-    
+
 
     macroSelectElement?.addEventListener('change', handleMacroSelectChange)
 
@@ -252,6 +304,7 @@ function ViewData() {
 
       markersRef.current.push(marker)
     })
+    
 
     return () => {
       macroSelectElement?.removeEventListener('change', handleMacroSelectChange)
@@ -304,7 +357,12 @@ function ViewData() {
             <div className="macro-controls">
               <label htmlFor="macro-select" className="macro-select-label">Select Macroinvertebrate</label>
               <div className="macro-select-wrapper">
-                <select id="macro-select" name="macro-select" className="macro-select">
+                <select
+                  id="macro-select"
+                  name="macro-select"
+                  className="macro-select"
+                  style={{ display: isMultiSelectOpen ? 'none' : 'block' }}
+                >
                   <option value="">All species (total)</option>
                   {MACRO_TAXA_OPTIONS.map((macro) => (
                     <option key={macro} value={macro}>
@@ -312,8 +370,31 @@ function ViewData() {
                     </option>
                   ))}
                 </select>
-                <p className="macro-select-description" id="multi-select-toggle">
-                  Multi-select
+
+                {isMultiSelectOpen && (
+                  <MultiSelect
+                    options={MACRO_TAXA_OPTIONS}
+                    value={selectedSpecies}
+                    onChange={setSelectedSpecies}
+                  />
+
+                )}
+                {isMultiSelectOpen && (
+                  <button
+                    type="button"
+                    className="apply-filters-btn"
+                    onClick={handleApplyFilters}
+                  >
+                    Apply Filters
+                  </button>
+                  )}
+
+                <p
+                  className="macro-select-description"
+                  onClick={() => setIsMultiSelectOpen(!isMultiSelectOpen)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  {isMultiSelectOpen ? 'Single-select' : 'Multi-select'}
                 </p>
               </div>
             </div>
