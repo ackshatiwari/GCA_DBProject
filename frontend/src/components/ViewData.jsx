@@ -77,7 +77,6 @@ function ViewData() {
 
     chartTitle.textContent = `Bugs counted per year for ${selectedSpecies.map(s => s.replaceAll('_', ' ')).join(', ')}`
 
-    // Unmount old root and clear
     if (chartRootRef.current) {
       chartRootRef.current.unmount()
       chartRootRef.current = null
