@@ -33,6 +33,7 @@ from fastapi.templating import Jinja2Templates
 
 from backend.api.health import router as health_router
 from backend.api.surveys import router as surveys_router
+from backend.api.forecasting import router as forecasting_router
 
 app = FastAPI()
 ROOT_DIR = Path(__file__).resolve().parents[2]
@@ -50,7 +51,7 @@ app.mount("/static", StaticFiles(directory=str(ROOT_DIR / "static")), name="stat
 
 app.include_router(health_router)
 app.include_router(surveys_router)
-
+app.include_router(forecasting_router)
 
 @app.get("/")
 def read_root(request: Request):
