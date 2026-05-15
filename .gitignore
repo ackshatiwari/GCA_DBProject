@@ -13,5 +13,6 @@ frontend/node_modules/
 
 # ignore log files
 backend-logs/*.log
+backend-logs/*.log.1
 
 plan-auth0-write-protection.prompt.md

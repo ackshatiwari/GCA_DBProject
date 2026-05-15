@@ -5,17 +5,24 @@ import {
 } from 'recharts'
 import { useAuthenticatedFetch } from '../api/client'
 
-function ForecastChart({ siteId, organismName }) {
+function ForecastChart({ siteId, organismName, onForecast }) {
+
+    // forecast data, loading, and error states
     const [forecastData, setForecastData] = useState(null)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
     const authenticatedFetch = useAuthenticatedFetch()
 
+    // Fetch forecast when siteId or organismName changes
     useEffect(() => {
         const fetchForecast = async () => {
             setError(null)
             setLoading(true)
             try {
+                // Call the forecast API endpoint
+                // changes the selected bug in the "Macroinvertibares Trends graph"
+
+
                 const response = await authenticatedFetch('/api/forecast', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -29,7 +36,19 @@ function ForecastChart({ siteId, organismName }) {
                 if (!response.ok) throw new Error('Forecast failed: ' + response.statusText)
 
                 const data = await response.json()
+                // store forecast data and pass to parent callback if provided
                 setForecastData(data)
+
+                // Call the onForecast callback with the raw data if it's a function
+                if (typeof onForecast === 'function') {
+                    try {
+                        // This lets the parent react only after the forecast is actually ready.
+                        onForecast(data, organismName)
+                    } catch (e) {
+                        // swallow errors from parent callback
+                        console.warn('onForecast callback error', e)
+                    }
+                }
             } catch (err) {
                 setError(err.message)
             } finally {
@@ -37,9 +56,11 @@ function ForecastChart({ siteId, organismName }) {
             }
         }
 
+        // reset forecast data when inputs change to avoid showing stale data during loading
         setForecastData(null)
 
         if (siteId && organismName) {
+            // only fetch if we have both required inputs
             fetchForecast()
         }
     }, [siteId, organismName])
@@ -48,10 +69,13 @@ function ForecastChart({ siteId, organismName }) {
     if (error) return <p style={{ color: 'red' }}>Error: {error}</p>
     if (!forecastData) return null
 
+    // prepare data for recharts, ensuring we have arrays to map over and handling missing confidence intervals gracefully
     const forecastSeries = Array.isArray(forecastData.forecast) ? forecastData.forecast : []
     const lowerSeries = Array.isArray(forecastData.confidence_lower) ? forecastData.confidence_lower : []
     const upperSeries = Array.isArray(forecastData.confidence_upper) ? forecastData.confidence_upper : []
 
+    // create a unified data structure for the chart, filling in nulls for any missing confidence
+    //  interval values so the chart can render without errors
     const chartData = forecastSeries.map((value, index) => ({
         step: `Month +${index + 1}`,
         forecast: value,
@@ -72,8 +96,8 @@ function ForecastChart({ siteId, organismName }) {
                 <AreaChart data={chartData}>
                     <defs>
                         <linearGradient id="colorForecast" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8} />
-                            <stop offset="95%" stopColor="#82ca9d" stopOpacity={0} />
+                            <stop offset="5%" stopColor="#e31313" stopOpacity={0.8} />
+                            <stop offset="95%" stopColor="#e31313" stopOpacity={0} />
                         </linearGradient>
                     </defs>
                     <XAxis dataKey="step" />
@@ -86,9 +110,9 @@ function ForecastChart({ siteId, organismName }) {
                     <Line
                         type="monotone"
                         dataKey="forecast"
-                        stroke="#82ca9d"
+                        stroke="#e31313"
                         strokeDasharray="5 5"
-                        name={`Forecast (${modelName.toUpperCase()})`}
+                        name={`Forecast () (${modelName.toUpperCase()})`}
                     />
                     {hasConfidenceBand ? (
                         <Area
@@ -101,9 +125,7 @@ function ForecastChart({ siteId, organismName }) {
                     ) : null}
                 </AreaChart>
             </ResponsiveContainer>
-            <p style={{ marginTop: '0.75rem', fontSize: '0.9rem', color: '#555' }}>
-                Forecasted values are shown by month because the current API does not return historical series with the forecast payload.
-            </p>
+            
         </div>
     )
 }

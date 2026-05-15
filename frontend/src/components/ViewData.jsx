@@ -49,6 +49,7 @@ function ViewData() {
   const [selectedSpecies, setSelectedSpecies] = useState([])
   const [isMultiSelectOpen, setIsMultiSelectOpen] = useState(false)
   const [showForecast, setShowForecast] = useState(false)
+  const [forecastOverlayData, setForecastOverlayData] = useState([])
   const authenticatedFetch = useAuthenticatedFetch()
 
 
@@ -240,6 +241,65 @@ function ViewData() {
     setTrendsDataState(trendsData)
   }, [selectedMacro])
 
+  // Clear forecast overlay when forecast panel is closed or site changes
+  useEffect(() => {
+    if (!showForecast) {
+      setForecastOverlayData([])
+    }
+  }, [showForecast, selectedSiteId])
+
+  // Handler to receive forecast payload from ForecastChart and prepare overlay points
+  const handleReceiveForecast = (data, organismName) => {
+    if (!data) return
+    const forecastSeries = Array.isArray(data.forecast) ? data.forecast : []
+    if (forecastSeries.length === 0) return
+
+    // Sync the main trends graph to the organism that was actually forecasted.
+    if (organismName) {
+      setSelectedMacro(organismName)
+    }
+
+    // Determine base month (last month in current trends) in YYYY-MM format
+    let lastMonthStr = null
+    if (trendsDataState && trendsDataState.length > 0) {
+      lastMonthStr = trendsDataState[trendsDataState.length - 1].month
+    } else if (activeSiteMacroTrendsRef.current && activeSiteMacroTrendsRef.current.length > 0) {
+      const months = activeSiteMacroTrendsRef.current
+        .map(e => String(e.survey_date).slice(0, 7))
+        .filter(Boolean)
+        .sort()
+      lastMonthStr = months[months.length - 1]
+    }
+
+    // Fallback to current month if we can't determine last month
+    const baseDate = lastMonthStr ? new Date(`${lastMonthStr}-01`) : new Date()
+
+    const points = forecastSeries.map((v, i) => {
+      const d = new Date(baseDate.getFullYear(), baseDate.getMonth() + i + 1, 1)
+      const monthLabel = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      return { month: monthLabel, forecast: Number(v) }
+    })
+
+    setForecastOverlayData(points)
+  }
+
+  // Build combined dataset (historical + forecast overlay) for the main chart
+  const combinedTrendsData = (() => {
+    const map = new Map()
+    trendsDataState.forEach(item => {
+      map.set(item.month, { ...item })
+    })
+    forecastOverlayData.forEach(item => {
+      const existing = map.get(item.month)
+      if (existing) {
+        existing.forecast = item.forecast
+      } else {
+        map.set(item.month, { month: item.month, forecast: item.forecast })
+      }
+    })
+    return Array.from(map.values()).sort((a, b) => a.month.localeCompare(b.month))
+  })()
+
 
   return (
     <section className="view-data-shell">
@@ -295,6 +355,8 @@ function ViewData() {
               const siteId = selectedSiteId || (coordinates.length > 0 ? coordinates[0].site_id : null)
               const organismName = forecastOrganism || null
               if (siteId && organismName) {
+                setIsMultiSelectOpen(false)
+                setSelectedSpecies([])
                 setShowForecast(true)
               } else {
                 alert('Please select a site and macroinvertebrate to view the forecast.')
@@ -305,7 +367,7 @@ function ViewData() {
           </button>
           <div id="forecast-container" className="forecast-container">
             {showForecast && selectedSiteId && forecastOrganism && (
-              <ForecastChart siteId={selectedSiteId} organismName={forecastOrganism} />
+              <ForecastChart siteId={selectedSiteId} organismName={forecastOrganism} onForecast={handleReceiveForecast} />
             )}
           </div>
         </div>
@@ -364,13 +426,14 @@ function ViewData() {
           </div>
           <div className="macro-trends-title">{trendsTitle || 'Total bugs counted per month (all bug types)'}</div>
           <div className="macro-trends-graph" aria-live="polite">
-            {trendsDataState && trendsDataState.length > 0 ? (
+            {combinedTrendsData && combinedTrendsData.length > 0 ? (
               <ResponsiveContainer width="100%" height={360}>
-                <LineChart data={trendsDataState}>
+                <LineChart data={combinedTrendsData}>
                   <XAxis dataKey="month" />
                   <YAxis allowDecimals={false} />
                   <CartesianGrid stroke="#aaa" strokeDasharray="5 5" />
                   <Line type="monotone" dataKey="count" stroke="#8884d8" />
+                  <Line type="monotone" dataKey="forecast" stroke="#e31313" strokeDasharray="5 5" name="Forecast" />
                   <Tooltip />
                 </LineChart>
               </ResponsiveContainer>
