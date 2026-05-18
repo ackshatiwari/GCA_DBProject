@@ -4,6 +4,7 @@ import './styles/App.css'
 import DataImport from './components/DataImport'
 import ViewData from './components/ViewData'
 import Auth from './components/Auth'
+import Dashboard from './components/Dashboard'
 
 function App() {
   const { isAuthenticated, isLoading, getAccessTokenSilently, getAccessTokenWithPopup, user } = useAuth0()
@@ -54,12 +55,24 @@ function App() {
   }, [isAuthenticated, getAccessTokenSilently, getAccessTokenWithPopup])
   const navItems = []
   if (permissions && (permissions.includes('write:manual_submit') || permissions.includes('write:csv_upload'))) {
-    navItems.push({ key: 'enter-data', label: 'Enter Data', })
+    navItems.push({ key: 'enter-data', label: 'Enter Data' })
+  }
+  // if the user has both write permissions, show a Dashboard nav
+  if (permissions && permissions.includes('write:manual_submit') && permissions.includes('write:csv_upload')) {
+    navItems.push({ key: 'dashboard', label: 'Dashboard' })
   }
   if (permissions && permissions.includes('read:view_data')) {
     navItems.push({ key: 'view-data', label: 'View Data' })
   }
-    navItems.push({ key: 'login', label: 'Login' })
+
+  let loginLabel = 'Login'
+  if (permissions && (permissions.includes('write:manual_submit') || permissions.includes('write:csv_upload'))) {
+    loginLabel = 'Dashboard'
+  } else if (permissions && permissions.includes('read:view_data')) {
+    loginLabel = 'Profile'
+  }
+
+  navItems.push({ key: 'login', label: loginLabel })
 
   // console logs the auth state, the user it is logged in as, and the permissions
   console.log('Auth State:', { isAuthenticated, isLoading })
@@ -105,6 +118,8 @@ function App() {
           )
         ) : activeNav === 'view-data' ? (
           <ViewData />
+        ) : activeNav === 'dashboard' ? (
+          <Dashboard />
         ) : activeNav === 'login' ? (
           <Auth />
         ) : (

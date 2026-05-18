@@ -7,6 +7,7 @@ from backend.schemas.survey import ManualSurveyPayload
 from backend.services.survey_persistence import upsert_survey, refresh_children
 import os
 import psycopg2
+import sys
 
 router = APIRouter(prefix="/api", tags=["surveys"])
 logger = get_file_logger("backend.api.surveys", "csv_import.log")
@@ -248,3 +249,105 @@ def get_survey_details(
         },
         "macro_taxa_trends": macro_taxa_trends,
     }
+
+
+
+@router.get("/sites")
+def list_sites(
+    claims: dict = Depends(require_permission("read:view_data")),
+):
+    """Return distinct sites (site_id, site_name, site_desc) from surveys."""
+    database_url = os.getenv("DATABASE_URL")
+    if not database_url:
+        logger.error("Missing DATABASE_URL")
+        raise HTTPException(status_code=500, detail="Database URL not configured")
+
+    conn = None
+    cur = None
+    try:
+        conn = psycopg2.connect(database_url, connect_timeout=10)
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT DISTINCT site_id, site_name, site_desc FROM public.surveys ORDER BY site_name"
+        )
+        sites = [
+            {"site_id": row[0], "site_name": row[1], "site_desc": row[2]} for row in cur.fetchall()
+        ]
+        logger.info("Fetched %s sites", len(sites))
+    except Exception as e:
+        logger.exception("Error fetching sites: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if cur is not None:
+            cur.close()
+        if conn is not None:
+            conn.close()
+
+    return {"sites": sites}
+
+
+@router.post("/trigger-web-scrape")
+def trigger_web_scrape(
+    claims: dict = Depends(require_permission("write:csv_upload")),
+):
+    """Trigger the web scrape script in background and return accepted."""
+    import subprocess
+    from pathlib import Path
+
+    script_path = Path(__file__).parent.parent / "scripts" / "web_scrape_script.py"
+    if not script_path.exists():
+        logger.error("Web scrape script not found at %s", script_path)
+        raise HTTPException(status_code=500, detail="Web scrape script not found")
+
+    try:
+        # Launch the script in background; do not wait for completion
+        subprocess.Popen([sys.executable, str(script_path)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        logger.info("Triggered web scrape script: %s", script_path)
+    except Exception as e:
+        logger.exception("Failed to start web scrape script: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+    return {"message": "Web scrape triggered"}
+
+
+
+@router.get("/organism-distribution")
+def organism_distribution(
+    organism: str,
+    claims: dict = Depends(require_permission("read:view_data")),
+):
+    """Return aggregated counts for an organism grouped by site (site_id, site_name, total_count)."""
+    database_url = os.getenv("DATABASE_URL")
+    if not database_url:
+        logger.error("Missing DATABASE_URL")
+        raise HTTPException(status_code=500, detail="Database URL not configured")
+
+    conn = None
+    cur = None
+    try:
+        conn = psycopg2.connect(database_url, connect_timeout=10)
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT s.site_id, s.site_name, SUM(m.count) as total
+            FROM public.macro_taxa m
+            JOIN public.surveys s ON s.id = m.survey_id
+            WHERE m.organism_name = %s
+            GROUP BY s.site_id, s.site_name
+            ORDER BY total DESC
+            """,
+            (organism,)
+        )
+        rows = cur.fetchall()
+        data = [{"site_id": r[0], "site_name": r[1], "count": int(r[2] or 0)} for r in rows]
+        logger.info("Aggregated organism distribution for %s: %s rows", organism, len(data))
+    except Exception as e:
+        logger.exception("Error computing organism distribution: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if cur is not None:
+            cur.close()
+        if conn is not None:
+            conn.close()
+
+    return {"distribution": data}
