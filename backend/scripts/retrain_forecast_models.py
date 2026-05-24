@@ -10,18 +10,22 @@ import os
 import psycopg2
 import pandas as pd
 from backend.services.ml_service import fetch_aggregated_trends, forecast_linear, forecast_ets
+from backend.app.logging_utils import get_file_logger
+
+logger = get_file_logger("backend.scripts.retrain", "forecasts.log")
 
 
 database_url = os.getenv("DATABASE_URL")
 
 if not database_url:
-    print("ERROR: DATABASE_URL environment variable is not set.")
+    logger.error("DATABASE_URL environment variable is not set.")
     sys.exit(1)
 
 try:
     conn = psycopg2.connect(database_url)
+    logger.info("Connected to database for retraining")
 except Exception as exc:
-    print(f"ERROR: Failed to connect to database: {exc}")
+    logger.exception("Failed to connect to database: %s", exc)
     raise
 
 cur = None
@@ -36,27 +40,33 @@ try:
             JOIN public.surveys s ON m.survey_id = s.id
         """)
         combinations = cur.fetchall()
-        print(f"Found {len(combinations)} unique site/organism combinations to retrain.")
+        logger.info("Found %d unique site/organism combinations to retrain.", len(combinations))
     except Exception as exc:
-        print(f"ERROR: Failed to fetch site/organism combinations: {exc}")
+        logger.exception("Failed to fetch site/organism combinations: %s", exc)
         raise
 
     if not combinations:
+        logger.warning("No site/organism combinations were returned from macro_taxa + surveys.")
         raise RuntimeError("No site/organism combinations were returned from macro_taxa + surveys.")
+
+    inserted = 0
+    skipped_no_data = 0
+    skipped_insufficient = 0
+    failures = 0
 
     for site_id, organism_name in combinations:
         try:
-            print(f"Processing site_id={site_id}, organism={organism_name}")
+            logger.info("Processing site_id=%s, organism=%s", site_id, organism_name)
 
             df = fetch_aggregated_trends(conn, site_id, organism_name)
             if df is None or df.empty:
-                print(f"WARNING: No aggregated trend data returned for site_id={site_id}, organism={organism_name}; skipping.")
+                logger.warning("No aggregated trend data for site_id=%s organism=%s; skipping.", site_id, organism_name)
+                skipped_no_data += 1
                 continue
 
             if len(df) < 3:
-                print(
-                    f"WARNING: Insufficient data for site_id={site_id}, organism={organism_name}: {len(df)} months; skipping."
-                )
+                logger.warning("Insufficient data for site_id=%s organism=%s: %d months; skipping.", site_id, organism_name, len(df))
+                skipped_insufficient += 1
                 continue
 
             if len(df) < 10:
@@ -94,6 +104,14 @@ try:
                     version
                 )
                 VALUES (%s, %s, %s, %s, %s, %s, NOW(), %s, %s)
+                ON CONFLICT (site_id, organism_name, model_method)
+                DO UPDATE SET
+                    predictions = EXCLUDED.predictions,
+                    rmse = EXCLUDED.rmse,
+                    data_points = EXCLUDED.data_points,
+                    last_trained = NOW(),
+                    last_data_ts = EXCLUDED.last_data_ts,
+                    version = public.ml_models.version + 1
             """, (
                 site_id,
                 organism_name,
@@ -106,13 +124,16 @@ try:
             ))
             conn.commit()
 
-            print(f"Inserted retrained model for site_id {site_id}, organism {organism_name}.")
+            inserted += 1
+            logger.info("Upserted retrained model for site_id=%s organism=%s", site_id, organism_name)
         except Exception as exc:
             conn.rollback()
-            print(f"ERROR: Failed while processing site_id={site_id}, organism={organism_name}: {exc}")
+            failures += 1
+            logger.exception("Failed while processing site_id=%s organism=%s: %s", site_id, organism_name, exc)
             raise
+    logger.info("Retrain summary: inserted=%d skipped_no_data=%d skipped_insufficient=%d failures=%d", inserted, skipped_no_data, skipped_insufficient, failures)
 except Exception as exc:
-    print(f"ERROR: retrain_forecast_models.py failed: {exc}")
+    logger.exception("retrain_forecast_models.py failed: %s", exc)
     raise
 finally:
     if cur is not None:

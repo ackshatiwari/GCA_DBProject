@@ -7,6 +7,7 @@ export default function Dashboard() {
   const [sites, setSites] = useState([])
   const [loading, setLoading] = useState(true)
   const [scraping, setScraping] = useState(false)
+  const [retraining, setRetraining] = useState(false)
   const [message, setMessage] = useState(null)
   const [surveysByMonth, setSurveysByMonth] = useState([])
   const [page, setPage] = useState(1)
@@ -20,7 +21,7 @@ export default function Dashboard() {
     'worms', 'flatworms', 'leeches', 'crayfish', 'sowbugs', 'scuds', 'stoneflies', 'mayflies', 'dragonflies', 'damselflies', 'hellgrammites', 'fishflies', 'alderflies', 'common_netspinners', 'most_caddisflies', 'beetles', 'midges', 'blackflies', 'most_true_flies', 'gilled_snails', 'lunged_snails', 'clams'
   ]
 
-  const PIE_COLORS = ['#2d6cdf','#f97316','#10b981','#a78bfa','#ef4444','#f59e0b','#06b6d4','#ec4899','#64748b','#065f46']
+  const PIE_COLORS = ['#2d6cdf', '#f97316', '#10b981', '#a78bfa', '#ef4444', '#f59e0b', '#06b6d4', '#ec4899', '#64748b', '#065f46']
 
   useEffect(() => {
     const fetchSites = async () => {
@@ -221,6 +222,46 @@ export default function Dashboard() {
     }
   }
 
+  const triggerRetrain = async () => {
+    if (!isAuthenticated) {
+      setMessage('Please log in to trigger retraining')
+      return
+    }
+
+    setRetraining(true)
+    setMessage(null)
+    try {
+      let token
+      try {
+        token = await getAccessTokenSilently({
+          authorizationParams: { audience: import.meta.env.VITE_AUTH0_AUDIENCE },
+        })
+      } catch (err) {
+        if (err?.error === 'consent_required' || err?.error === 'interaction_required') {
+          token = await getAccessTokenWithPopup({
+            authorizationParams: { audience: import.meta.env.VITE_AUTH0_AUDIENCE },
+          })
+        } else {
+          throw err
+        }
+      }
+
+      const res = await fetch('/api/forecast/retrain-forecast-models', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.detail || data.message || 'Failed to trigger retraining')
+        setMessage(data.message || 'Retraining triggered')
+      } catch (e) {
+        console.error(e)
+        setMessage('Error: ' + e.message)
+      } finally {
+        setRetraining(false)
+      }
+  }
+
   const totalPages = Math.max(1, Math.ceil((sites.length || 0) / pageSize))
   const pagedSites = sites.slice((page - 1) * pageSize, page * pageSize)
 
@@ -228,7 +269,7 @@ export default function Dashboard() {
     <section className="dashboard-page">
       <h1 className="dashboard-title">Goose Creek Association</h1>
 
-      {}
+      { }
 
       <div className="dashboard-columns">
         <aside className="sites-column">
@@ -309,7 +350,7 @@ export default function Dashboard() {
                 </LineChart>
               </ResponsiveContainer>
             )}
-            
+
             <section className="pie-panel">
               <h3>Site Distribution of {organism.replaceAll('_', ' ').charAt(0).toUpperCase() + organism.replaceAll('_', ' ').slice(1)}</h3>
               <div className="pie-chart-wrap">
@@ -336,6 +377,10 @@ export default function Dashboard() {
               <div className="actions-row">
                 <button onClick={triggerScrape} disabled={scraping} className="btn-primary">
                   {scraping ? 'Scraping...' : 'Scrape & Upload New Data'}
+                </button>
+                {/* Add a button that retrains forecast models  */}
+                <button onClick={triggerRetrain} disabled={retraining} className="btn-secondary">
+                  {retraining ? 'Retraining...' : 'Retrain Forecast Models'}
                 </button>
                 {message && <div className="dashboard-message">{message}</div>}
               </div>

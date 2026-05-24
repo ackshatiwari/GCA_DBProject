@@ -6,6 +6,7 @@ from backend.app.logging_utils import get_file_logger
 
 
 import os
+import sys
 
 from backend.services.ml_service import fetch_aggregated_trends, forecast_linear, forecast_ets
 
@@ -85,3 +86,28 @@ def forecast_trends(
         conn.close()
 
         
+
+@router.post("/forecast/retrain-forecast-models")
+def retrain_forecast_models(
+    claims: dict = Depends(require_permission("write:csv_upload")),
+):
+    """Retrains each of the forecast models for all sites to ensure latest data"""
+    import subprocess
+    from pathlib import Path
+    
+    script_path = Path(__file__).parent.parent / "scripts" / "retrain_forecast_models.py"
+    if not script_path.exists():
+        logger.error(f"Retrain script not found at {script_path}")
+        raise HTTPException(status_code=500, detail="Retrain script not found")
+    
+    try:
+        # launch the script in the background
+        subprocess.Popen([sys.executable, str(script_path)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        logger.info("Launched retrain_forecast_models.py script in background")
+    except Exception as e:
+        logger.error(f"Failed to launch retrain script: {e}")
+        raise HTTPException(status_code=500, detail="Failed to launch retrain script")
+    
+    return {"message": "Retraining of forecast models has been initiated."}
+
+    
