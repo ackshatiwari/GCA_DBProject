@@ -13,6 +13,7 @@ export default function Dashboard() {
   const [loadingDownload, setLoadingDownload] = useState(false)
   const [message, setMessage] = useState(null)
   const [surveysByMonth, setSurveysByMonth] = useState([])
+  const [macroTaxaTrends, setMacroTaxaTrends] = useState([])
   const [page, setPage] = useState(1)
   const pageSize = 6
   const [allCoords, setAllCoords] = useState([])
@@ -31,6 +32,7 @@ export default function Dashboard() {
       if (!isAuthenticated) {
         setSites([])
         setLoading(false)
+        setMacroTaxaTrends([])
         return
       }
 
@@ -148,11 +150,13 @@ export default function Dashboard() {
         if (!res.ok) throw new Error('Failed to load site details')
         const data = await res.json()
         const trends = data.macro_taxa_trends || []
+        setMacroTaxaTrends(trends)
         const monthly = buildMonthlyTrendsData(trends, organism)
         setSurveysByMonth(monthly)
       } catch (e) {
         console.error(e)
         setSurveysByMonth([])
+        setMacroTaxaTrends([])
       }
     }
 
@@ -300,6 +304,7 @@ export default function Dashboard() {
         organism,
         monthlyTrend: surveysByMonth,
         distribution: selectedDistribution,
+        macroTaxaTrends,
         organisms: MACRO_TAXA_OPTIONS,
       })
 

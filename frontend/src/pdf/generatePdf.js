@@ -1,8 +1,5 @@
-import React from 'react'
-import { renderToStaticMarkup } from 'react-dom/server'
 import jsPDF from 'jspdf'
 import 'svg2pdf.js'
-import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
 
 
 // Helper to convert SVG markup string to an SVG element that jsPDF can render
@@ -22,10 +19,6 @@ const svgMarkupToElement = (svgMarkup) => {
         if (found) svgElement = found
     }
 
-    // Log snippet for debugging in the browser console
-    try { console.log('[svgMarkupToElement] svg markup snippet:', String(svgMarkup).slice(0, 1000)) } catch (e) {}
-
-    // Ensure core namespaces exist
     svgElement.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
     if (!svgElement.getAttribute('xmlns:xlink')) svgElement.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink')
 
@@ -46,6 +39,73 @@ const svgMarkupToElement = (svgMarkup) => {
     }
 
     return svgElement
+}
+
+const extractYear = (value) => {
+    if (value == null) return null
+
+    const parsedDate = new Date(value)
+    if (!Number.isNaN(parsedDate.getTime())) return parsedDate.getFullYear()
+
+    const yearMatch = String(value).match(/\b(\d{4})\b/)
+    return yearMatch ? Number(yearMatch[1]) : null
+}
+
+const buildYearlyOrganismSeries = (trendRows) => {
+    const rows = Array.isArray(trendRows) ? trendRows : []
+    const countsByOrganism = new Map()
+    const organismOrder = []
+    const yearsSeen = new Set()
+
+    rows.forEach((row) => {
+        const organism = String(row?.organism_name || '').trim()
+        const year = extractYear(row?.survey_date)
+        const count = Number(row?.count || 0)
+
+        if (!organism || year == null) return
+
+        yearsSeen.add(year)
+
+        if (!countsByOrganism.has(organism)) {
+            countsByOrganism.set(organism, new Map())
+            organismOrder.push(organism)
+        }
+
+        const yearlyCounts = countsByOrganism.get(organism)
+        yearlyCounts.set(year, (yearlyCounts.get(year) || 0) + count)
+    })
+
+    const sortedYears = Array.from(yearsSeen).sort((a, b) => a - b)
+    if (!sortedYears.length) {
+        return {
+            years: [],
+            organisms: [],
+            seriesByOrganism: new Map(),
+        }
+    }
+
+    const fullYearRange = Array.from(
+        { length: sortedYears[sortedYears.length - 1] - sortedYears[0] + 1 },
+        (_, index) => sortedYears[0] + index,
+    )
+
+    const seriesByOrganism = new Map()
+    organismOrder.forEach((organism) => {
+        const yearlyCounts = countsByOrganism.get(organism) || new Map()
+        seriesByOrganism.set(
+            organism,
+            fullYearRange.map((year) => ({
+                year: String(year),
+                count: Number(yearlyCounts.get(year) || 0),
+            })),
+        )
+    })
+
+    return {
+        years: fullYearRange,
+        organisms: organismOrder,
+        seriesByOrganism,
+    }
 }
 
 
@@ -181,6 +241,12 @@ export async function generatePdf(data) {
     const selectedOrganism = data && data.organism ? String(data.organism).replaceAll('_', ' ') : 'selected bug'
     const selectedTrend = Array.isArray(data?.monthlyTrend) ? data.monthlyTrend : []
     const selectedDistribution = Array.isArray(data?.distribution) ? data.distribution : []
+    const selectedSiteTrends = Array.isArray(data?.macroTaxaTrends)
+        ? data.macroTaxaTrends
+        : Array.isArray(data?.macro_taxa_trends)
+            ? data.macro_taxa_trends
+            : []
+    const yearlySiteData = buildYearlyOrganismSeries(selectedSiteTrends)
 
     let trendSvg = null
     let distributionSvg = null
@@ -207,7 +273,6 @@ export async function generatePdf(data) {
     doc.text(today, margin, 36)
     doc.setFontSize(11)
     doc.text(`Selected site: ${selectedSiteName}`, margin, 44)
-    doc.text(`Selected bug: ${selectedOrganism}`, margin, 50)
 
     // Introduction
     doc.setFontSize(12)
@@ -219,89 +284,36 @@ export async function generatePdf(data) {
     // Use splitTextToSize to handle long paragraphs and ensure they fit within the page margins
     
     const introLines = doc.splitTextToSize(
-        'This report summarizes recent water quality and macroinvertebrate monitoring results for the Goose Creek watershed. Water quality is a key indicator of the ecological health of streams and rivers; it affects biodiversity, drinking water supplies, recreation, and the resilience of aquatic ecosystems.',
+        'Watter quality refers to the chemical, physical, and biological characteristics of water, which influence its suitability for various uses and the health of aquatic ecosystems. One of the metrics for determining water quality is the presence and abundance of certain types of macroinvertibrates; some of these organisms are more tolerant of pollution than others, so their presence or absence can indicate the overall health of the water body. For example, mayflies are very sensitive to pollution, so a healthy population of mayflies often indicates good water quality, while an abundance of pollution-tolerant organisms like worms may suggest poorer conditions.',
         usableWidth
     )
     doc.text(introLines, margin, 58)
 
     const intro2 = doc.splitTextToSize(
-        'Rivers transport nutrients and contaminants, provide habitat for many species, and connect landscapes. Monitoring organisms such as macroinvertebrates ("bugs") offers a practical measure of long-term water quality because these species integrate environmental conditions over time.',
+        'Goose Creek is a tributary of the Potomac River in Loudoun County, Virginia. It runs for approx. 50 miles and has a watershed of about 400 square miles. The creek and its tributaries provide habitat for a variety of aquatic organisms, including such macroinvertebrrates. The Goose Creek Association (GCA) has been monitoring water quality in the creek for many years;  this report summarizes recent macroinvertebrate data collected by GCA volunteers over the years, with a focus on the selected site and organism. The following pages present charts of trends and distributions, as well as statistics for key macroinvertebrate groups.',
         usableWidth
     )
     doc.text(intro2, margin, 58 + introLines.length * 6 + 6)
 
-    // Selected site charts
-    doc.addPage()
-    drawSectionTitle(`Selected Site Charts: ${selectedSiteName}`, 24)
-    doc.setFontSize(10)
-    doc.setFont('Times', 'normal')
-    const chartIntro = doc.splitTextToSize(
-        `The charts below use data for the selected site (${selectedSiteName}) and the selected bug (${selectedOrganism}).`,
-        usableWidth
-    )
-    doc.text(chartIntro, margin, 32)
 
-    drawSectionTitle('Monthly trend', 48)
-    if (trendSvg) {
-            try { console.log('[generatePdf] trendSvg length', trendSvg?.length) } catch (e) {}
-        try {
-            console.log('[generatePdf] inserting trend SVG into PDF')
-            await insertSvgIntoPdf(doc, trendSvg, margin, 52, usableWidth, 110)
-        } catch (error) {
-            chartError = chartError || (error instanceof Error ? error : new Error('Failed to export monthly trend chart directly to PDF'))
-            doc.setFontSize(10)
-            doc.setFont('Times', 'normal')
-            doc.text('Monthly trend chart could not be exported.', margin, 64)
-        }
-    } else {
-        doc.setFontSize(10)
-        doc.setFont('Times', 'normal')
-        doc.text(selectedTrend.length > 0 ? 'Monthly trend chart could not be rendered.' : 'No trend data available.', margin, 64)
-    }
-
-    const selectedDistributionTitleY = 172
-    if (distributionSvg) {
-        drawSectionTitle('Distribution for selected site', selectedDistributionTitleY)
-        try { console.log('[generatePdf] distributionSvg length', distributionSvg?.length) } catch (e) {}
-        try {
-            console.log('[generatePdf] inserting distribution SVG into PDF')
-            await insertSvgIntoPdf(doc, distributionSvg, margin, selectedDistributionTitleY + 6, usableWidth, 90)
-        } catch (error) {
-            chartError = chartError || (error instanceof Error ? error : new Error('Failed to export distribution chart directly to PDF'))
-            doc.setFontSize(10)
-            doc.setFont('Times', 'normal')
-            doc.text('Distribution chart could not be exported.', margin, selectedDistributionTitleY + 10)
-        }
-    } else {
-            drawSectionTitle('Distribution for selected site', selectedDistributionTitleY)
-            doc.setFontSize(10)
-            doc.setFont('Times', 'normal')
-            doc.text(selectedDistribution.length > 0 ? 'Distribution chart could not be rendered.' : 'No selected-site distribution data available.', margin, selectedDistributionTitleY + 10)
-    }
-
-    if (chartError) {
-        doc.setFontSize(9)
-        doc.setTextColor(160, 0, 0)
-        doc.setFont('Times', 'normal')
-        doc.text(`Chart rendering fallback used: ${chartError.message}`, margin, 268)
-        doc.setTextColor(0)
-    }
 
     // Stats - per organism pages
-    // Use provided organism list if available, otherwise fall back to a reasonable default set
+    // Use the recorded organism list from the selected site when available.
     const DEFAULT_ORGANISMS = [
         'worms', 'stoneflies', 'mayflies', 'dragonflies', 'midges'
     ]
 
-    const organisms = (data && data.organisms && Array.isArray(data.organisms) && data.organisms.length)
+    const organisms = yearlySiteData.organisms.length
+        ? yearlySiteData.organisms
+        : (data && data.organisms && Array.isArray(data.organisms) && data.organisms.length)
         ? data.organisms
         : DEFAULT_ORGANISMS
 
-    // Determine years: past 3 full years (excluding current year)
+    // Determine years: every recorded year at the selected site when available.
     const year = NOW.getFullYear()
-    const years = [year - 1, year - 2, year - 3]
+    const years = yearlySiteData.years.length ? yearlySiteData.years : [year - 1, year - 2, year - 3]
 
-    // Helper: deterministic sample numbers when no stats provided
+    // Helper: deterministic sample numbers when no site-level trends are available.
     const deterministicCounts = (name) => {
         // simple hash from name to produce repeatable but varied counts
         let h = 0
@@ -319,33 +331,30 @@ export async function generatePdf(data) {
         const header = organism.replaceAll('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())
         doc.text(header, margin, 24)
 
-        // Stats: try to use data.stats if present
-        let counts = null
-        if (data && data.stats && data.stats[organism]) {
-            // expected shape: { '2025': 12, '2024': 10, '2023': 8 }
-            counts = years.map((y) => Number(data.stats[organism][String(y)] || 0))
-        } else {
-            counts = deterministicCounts(organism)
-        }
+        const organismSeries = yearlySiteData.seriesByOrganism.get(organism)
+        const counts = organismSeries
+            ? organismSeries.map((point) => Number(point.count || 0))
+            : (data && data.stats && data.stats[organism]
+                ? years.map((y) => Number(data.stats[organism][String(y)] || 0))
+                : deterministicCounts(organism))
 
         // Bullet list of counts
         doc.setFontSize(11)
         doc.setFont('Times', 'normal')
         const bulletsStartY = 36
-        doc.text('Statistics (past 3 years):', margin, bulletsStartY)
-        const bulletLines = years.map((y, i) => `- ${y}: ${counts[i]} individuals recorded`)
-        doc.text(bulletLines, margin + 6, bulletsStartY + 8)
+        const yearLabel = years.length ? `${years[0]}-${years[years.length - 1]}` : 'recent years'
+        doc.text(`Statistics (${yearLabel}):`, margin, bulletsStartY)
+        doc.text(`Years covered: ${years.length || counts.length} recorded years`, margin, bulletsStartY + 8)
 
         // Line chart summary for yearly counts
         const chartX = margin
         const chartY = bulletsStartY + 30
         const chartW = usableWidth
         const chartH = 55
-        const reversedCounts = counts.slice().reverse()
-        const seriesPoints = years
-            .slice()
-            .reverse()
-            .map((yearLabel, index) => ({ year: String(yearLabel), count: reversedCounts[index] }))
+        const seriesPoints = organismSeries || years.map((yearLabel, index) => ({
+            year: String(yearLabel),
+            count: Number(counts[index] || 0),
+        }))
 
         const chartMarkup = generateSimpleLineChartSvg(seriesPoints, { xKey: 'year', yKey: 'count', width: 720, height: 280 })
 
@@ -378,10 +387,30 @@ export async function generatePdf(data) {
     doc.text(concl, margin, 34)
 
     doc.setFontSize(11)
-    doc.text('Those who helped (fill in):', margin, 34 + concl.length * 6 + 8)
+    doc.text('Those who helped', margin, 34 + concl.length * 6 + 8)
     const contactYStart = 34 + concl.length * 6 + 16
-    // provide 4 templated slots
-    for (let i = 0; i < 4; i++) {
+
+    // Ackshat Tiwari (ackshat.tiwari@gmail.com) (Founder of the Goose Creek Association Water Quality Database App)
+    // Annie Bellis (riversteward@goosecreek.org) (GCA River Steward)
+    // Alyson Borowczyk (alyson@goosecreek.org) (GCA Executive Director)
+    // And of course, the many volunteers who collected and contributed the data over the years!
+    
+    const helpers = [
+        { name: 'Ackshat Tiwari', contact: 'ackshat.tiwari@gmail.com' },
+        { name: 'Annie Bellis', contact: 'riversteward@goosecreek.org' },
+        { name: 'Alyson Borowczyk', contact: 'alyson@goosecreek.org' }
+    ]
+
+    for (let i = 0; i < helpers.length; i++) {
+        const helper = helpers[i]
+        const y = contactYStart + i * 7
+        doc.setFont(undefined, 'bold')
+        doc.text(helper.name + ':', margin, y)
+        doc.setFont(undefined, 'normal')
+        doc.text(helper.contact, margin + 40, y)
+    }
+
+    /*for (let i = 0; i < 4; i++) {
         const y = contactYStart + i * 16
         doc.setFont(undefined, 'bold')
         doc.text(`Name ${i + 1}:`, margin, y)
@@ -389,7 +418,7 @@ export async function generatePdf(data) {
         doc.text('______________________________', margin + 28, y)
         doc.text('Contact:', margin, y + 8)
         doc.text('______________________________', margin + 28, y + 8)
-    }
+    }*/
 
     // Save PDF
     const timestamp = NOW.toISOString().replaceAll(':', '-')
