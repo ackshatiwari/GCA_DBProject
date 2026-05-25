@@ -4,11 +4,18 @@ This project is a survey data platform for collecting, storing, viewing, and for
 
 ## What the app does
 
-The application supports three main workflows:
+The application supports a set of workflows for collecting, importing, enriching, viewing, analyzing, and exporting macroinvertebrate survey data:
 
-1. Manual data entry for survey records.
-2. CSV or Excel import for batch survey ingestion.
-3. Viewing site data and generating organism forecasts from historical survey records.
+- **Manual data entry:** an authenticated UI + API route for entering individual survey records and persisting them to the database (parent survey row + child tables for taxa, collection times, and metrics).
+- **CSV / Excel import (batch ingest):** upload CSV or `.xlsx` files to parse many surveys at once. The import flow includes worksheet selection, header normalization and mapping, duplicate-column handling, merging site metadata and coordinate sheets when present, validation of each row, and upsert into the database. See the upload route `/api/submit-data-csv`.
+- **Remote web-scrape & ingest:** optional background job that queries CleanWaterHub for survey records missing from the local database and ingests them. This can be triggered from the API (`/api/trigger-web-scrape`) and runs the scraper script in the background.
+- **Site & survey viewing:** read APIs return site lists, survey coordinates, and detailed site responses that include macro-taxa trend rows used by the frontend charts and reporting UI.
+- **Organism distribution & aggregation:** endpoints to compute aggregated counts for a selected organism grouped by site (useful for distribution charts and ranking sites by abundance).
+- **Forecasting & retrainable models:** time-series forecasting for organism counts at a site. The backend automatically selects a model (linear regression for short series, ETS for longer histories) but supports an override. Forecast responses include model metadata and RMSE. An administrative endpoint triggers a background retrain across all site/organism combinations and stores model predictions in the database.
+- **Dashboard & visualization:** the React frontend displays interactive charts (monthly trends, distributions, KPI cards) and site maps, with controls to select organisms and sites.
+- **PDF reporting / export:** generate multi-page PDF water-quality reports (title, per-organism statistics, line charts, conclusion and acknowledgements) from the browser using `jspdf` + `svg2pdf.js`. The export is accessible via the Dashboard "Download Chart Data" action.
+- **Admin actions from UI:** authorized users can trigger the web-scrape job and initiate retraining of forecast models from the Dashboard; those actions start background scripts so they do not block the API request.
+- **Authentication & authorization:** API routes are protected using Auth0 JWT bearer tokens and permission-based checks (scoped write/read actions for manual submit, CSV upload, scraping, retraining, and viewing data).
 
 The backend validates requests with Auth0 JWTs, writes survey data into Postgres, and exposes read APIs for site coordinates, site details, and forecasting. The frontend provides the user interface for login, data entry, and data review.
 
@@ -40,6 +47,7 @@ The frontend lives under `frontend/` and is built with React and Vite.
 - `frontend/src/main.jsx` initializes the app and wraps it in the Auth0 provider.
 - `frontend/src/App.jsx` controls navigation and shows the main app views based on permissions.
 - `frontend/src/components/` contains the user-facing pages for authentication, data entry, importing, viewing data, and charting forecast output.
+
 
 ### Data flow
 
