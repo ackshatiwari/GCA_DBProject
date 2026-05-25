@@ -12,11 +12,13 @@
   "dependencies": {
     "@auth0/auth0-react": "^2.16.2",
     "@recharts/devtools": "^0.0.13",
+    "jspdf": "^4.2.1",
     "mapbox-gl": "^3.23.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-select": "^5.10.2",
-    "recharts": "^3.8.1"
+    "recharts": "^3.8.1",
+    "svg2pdf.js": "^2.7.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",

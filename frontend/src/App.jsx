@@ -67,7 +67,7 @@ function App() {
 
   let loginLabel = 'Login'
   if (permissions && (permissions.includes('write:manual_submit') || permissions.includes('write:csv_upload'))) {
-    loginLabel = 'Dashboard'
+    loginLabel = 'Admin Profile'
   } else if (permissions && permissions.includes('read:view_data')) {
     loginLabel = 'Profile'
   }

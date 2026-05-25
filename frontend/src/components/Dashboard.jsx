@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useAuth0 } from '@auth0/auth0-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts'
+import { generatePdf } from "../pdf/generatePdf";
+
 
 export default function Dashboard() {
   const { isAuthenticated, getAccessTokenSilently, getAccessTokenWithPopup } = useAuth0()
@@ -8,6 +10,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [scraping, setScraping] = useState(false)
   const [retraining, setRetraining] = useState(false)
+  const [loadingDownload, setLoadingDownload] = useState(false)
   const [message, setMessage] = useState(null)
   const [surveysByMonth, setSurveysByMonth] = useState([])
   const [page, setPage] = useState(1)
@@ -183,6 +186,8 @@ export default function Dashboard() {
     setSurveysByMonth(arr)
   }, [allCoords, selectedSiteId, sites])
 
+
+
   const triggerScrape = async () => {
     if (!isAuthenticated) {
       setMessage('Please log in to trigger scraping')
@@ -253,13 +258,61 @@ export default function Dashboard() {
 
       const data = await res.json()
       if (!res.ok) throw new Error(data.detail || data.message || 'Failed to trigger retraining')
-        setMessage(data.message || 'Retraining triggered')
-      } catch (e) {
-        console.error(e)
-        setMessage('Error: ' + e.message)
-      } finally {
-        setRetraining(false)
-      }
+      setMessage(data.message || 'Retraining triggered')
+    } catch (e) {
+      console.error(e)
+      setMessage('Error: ' + e.message)
+    } finally {
+      setRetraining(false)
+    }
+  }
+
+  const triggerDownload = async () => {
+    if (!isAuthenticated) {
+      setMessage('Please log in to download data')
+      return
+    }
+
+    setLoadingDownload(true)
+    setMessage(null)
+
+    // Utilize a pdf generation tool called jsPDF to create a PDF document and trigger a download in the browser
+
+    const selectedSite = sites.find((site) => String(site.site_id) === String(selectedSiteId)) || null
+    const selectedDistribution = selectedSiteId
+      ? distribution.filter((entry) => String(entry.site_id) === String(selectedSiteId))
+      : distribution
+
+
+    try {
+      await generatePdf({
+        selectedSite: selectedSite
+          ? {
+            siteId: selectedSite.site_id,
+            siteName: selectedSite.site_name,
+            siteDescription: selectedSite.site_desc,
+          }
+          : {
+            siteId: selectedSiteId,
+            siteName: 'Selected site',
+            siteDescription: '',
+          },
+        organism,
+        monthlyTrend: surveysByMonth,
+        distribution: selectedDistribution,
+        organisms: MACRO_TAXA_OPTIONS,
+      })
+
+    } catch (error) {
+      console.error('Error generating PDF:', error)
+
+    }
+    finally {
+      setLoadingDownload(false)
+    }
+
+
+
   }
 
   const totalPages = Math.max(1, Math.ceil((sites.length || 0) / pageSize))
@@ -378,10 +431,15 @@ export default function Dashboard() {
                 <button onClick={triggerScrape} disabled={scraping} className="btn-primary">
                   {scraping ? 'Scraping...' : 'Scrape & Upload New Data'}
                 </button>
-                {/* Add a button that retrains forecast models  */}
-                <button onClick={triggerRetrain} disabled={retraining} className="btn-secondary">
+
+                <button onClick={triggerRetrain} disabled={retraining} className="btn-primary">
                   {retraining ? 'Retraining...' : 'Retrain Forecast Models'}
                 </button>
+
+                <button onClick={triggerDownload} disabled={loadingDownload} className="btn-primary">
+                  {loadingDownload ? 'Downloading...' : 'Download Chart Data'}
+                </button>
+
                 {message && <div className="dashboard-message">{message}</div>}
               </div>
             </div>
