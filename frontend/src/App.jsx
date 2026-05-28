@@ -5,10 +5,11 @@ import DataImport from './components/DataImport'
 import ViewData from './components/ViewData'
 import Auth from './components/Auth'
 import Dashboard from './components/Dashboard'
+import LandingPage from './components/landing/LandingPage'
 
 function App() {
   const { isAuthenticated, isLoading, getAccessTokenSilently, getAccessTokenWithPopup, user } = useAuth0()
-  const [activeNav, setActiveNav] = useState('enter-data')
+  const [activeNav, setActiveNav] = useState('landing')
   const [permissions, setPermissions] = useState(null)
 
   useEffect(() => {
@@ -79,6 +80,8 @@ function App() {
   console.log('User:', user)
   console.log('Permissions:', permissions)
 
+  console.log('Active Nav:', activeNav)
+
   if (isLoading) {
     return (
       <main className="app-shell">
@@ -93,7 +96,20 @@ function App() {
   return (
     <>
       <header className="top-navbar">
-        <div className="brand">GCA Database Project</div>
+        <div
+          className="brand"
+          role="button"
+          tabIndex={0}
+          onClick={() => setActiveNav('landing')}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault()
+              setActiveNav('landing')
+            }
+          }}
+        >
+          Goose Creek Association - Water Quality Platform
+        </div>
         <nav className="nav-columns" aria-label="Primary navigation">
           {navItems.map((item) => (
             <button
@@ -123,10 +139,7 @@ function App() {
         ) : activeNav === 'login' ? (
           <Auth />
         ) : (
-          <section className="dashboard-placeholder">
-            <h1>Dashboard</h1>
-            <p>Welcome to the GCA Database Project! Use the navigation above to enter data or view data.</p>
-          </section>
+          <LandingPage />
         )}
       </main>
     </>
