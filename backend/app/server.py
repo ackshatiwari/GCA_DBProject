@@ -53,3 +53,11 @@ app.mount("/static", StaticFiles(directory=str(ROOT_DIR / "static"), check_dir=F
 app.include_router(health_router)
 app.include_router(surveys_router)
 app.include_router(forecasting_router)
+
+@app.get("/")
+def read_root():
+    return {
+        "status": "online",
+        "message": "GCA Database Project API loading successful",
+        "documentation": "/docs"
+    }
