@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+pydantic
+python-jose[cryptography]
+python-multipart
+jinja2
+beautifulsoup4
+requests
+psycopg2-binary
+pandas
+numpy
+scikit-learn
+statsmodels
+matplotlib
+pytest
