@@ -15,7 +15,7 @@ export default function LandingPage() {
                 <div className='card'>
                     <h4>Data Entry</h4>
                     <p>Submit water quality data through a user-friendly interface, either <strong>manually</strong> or via <strong>CSV</strong> upload.</p>
-                    <img src='../../../public/csv_upload.png'></img>
+                    <img src='csv_upload.png'></img>
                 </div>
                 <div className='card'>
                     <h4>Data Visualization</h4>
