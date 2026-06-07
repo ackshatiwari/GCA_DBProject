@@ -36,7 +36,7 @@ from api.surveys import router as surveys_router
 from api.forecasting import router as forecasting_router
 
 app = FastAPI()
-# ROOT_DIR = Path(__file__).resolve().parents[1]
+ROOT_DIR = Path(__file__).resolve().parents[1]
 templates = Jinja2Templates(directory=str(ROOT_DIR / "templates"))
 
 app.add_middleware(
@@ -47,7 +47,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# app.mount("/static", StaticFiles(directory=str(ROOT_DIR / "static")), name="static")
+app.mount("/static", StaticFiles(directory=str(ROOT_DIR / "static"), check_dir=False), name="static")
+
 
 app.include_router(health_router)
 app.include_router(surveys_router)
