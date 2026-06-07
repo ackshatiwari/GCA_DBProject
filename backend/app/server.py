@@ -41,7 +41,7 @@ templates = Jinja2Templates(directory=str(ROOT_DIR / "templates"))
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173", "https://goosecreek-waterquality.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
