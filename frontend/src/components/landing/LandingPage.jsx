@@ -20,12 +20,12 @@ export default function LandingPage() {
                 <div className='card'>
                     <h4>Data Visualization</h4>
                     <p>View and analyze water quality data through <strong>interactive charts and maps</strong>. Paired with <strong>AI</strong> for forecasting future water quality trends based on historical data</p>
-                    <img src='../../../public/Macro_Tends_EXAMPLE.png'></img>
+                    <img src='Macro_Tends_EXAMPLE.png'></img>
                 </div>
                 <div className='card'>
                     <h4>Data Export</h4>
                     <p>Download water quality data as <strong>PDFs</strong> for offline analysis and reporting.</p>
-                    <img src='../../../public/download.png'></img>
+                    <img src='download.png'></img>
                 </div>
 
             </div>
@@ -51,13 +51,13 @@ export default function LandingPage() {
 
             <div className="map-row">
                 <div className="map-container">
-                    <img src="/ViewDataMap.png" alt="View data map example" className="landing-map-image" />
+                    <img src="ViewDataMap.png" alt="View data map example" className="landing-map-image" />
                 </div>
 
                 <div className="info-box">
                     <div className="forecast-demo">
                         <h4>Example Forecast</h4>
-                        <img src="/flatworms_chartdemo.png" alt="forecast demo" />
+                        <img src="flatworms_chartdemo.png" alt="forecast demo" />
                     </div>
                 </div>
             </div>
