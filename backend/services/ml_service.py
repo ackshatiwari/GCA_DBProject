@@ -4,7 +4,7 @@ from statsmodels.tsa.holtwinters import ExponentialSmoothing
 from sklearn.linear_model import LinearRegression
 import numpy as np
 from sklearn.metrics import mean_squared_error
-from backend.app.logging_utils import get_file_logger
+from app.logging_utils import get_file_logger
 
 
 logger = get_file_logger("backend.services.ml_service", "forecasts.log")

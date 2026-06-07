@@ -1,10 +1,10 @@
 import psycopg2
-from backend.app.logging_utils import get_file_logger
+from app.logging_utils import get_file_logger
 
 logger = get_file_logger("backend.services.survey_persistence", "survey_persistance.log")
 
 # backend-logs\survey_persistance.log
-from backend.app.logging_utils import get_file_logger
+from app.logging_utils import get_file_logger
 logger = get_file_logger("backend.services.survey_persistence", "survey_persistence.log")
 
 MACRO_TAXA_FIELDS = [

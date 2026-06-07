@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-from backend.services.ml_service import forecast_linear
+from services.ml_service import forecast_linear
 
 
 def test_forecast_linear_basic():

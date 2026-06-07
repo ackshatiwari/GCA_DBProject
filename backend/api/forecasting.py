@@ -1,14 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 import psycopg2
-from backend.api.auth import require_permission
+from api.auth import require_permission
 from pydantic import BaseModel
-from backend.app.logging_utils import get_file_logger
+from app.logging_utils import get_file_logger
 
 
 import os
 import sys
 
-from backend.services.ml_service import fetch_aggregated_trends, forecast_linear, forecast_ets
+from services.ml_service import fetch_aggregated_trends, forecast_linear, forecast_ets
 
 router = APIRouter(prefix="/api", tags=["forecasting"])
 logger = get_file_logger("backend.api.forecasting", "forecasts.log")

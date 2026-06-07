@@ -14,8 +14,8 @@ import json
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from backend.services.scraper_service import search_for_extra_surveys, insert_extra_surveys
-from backend.app.logging_utils import get_file_logger
+from services.scraper_service import search_for_extra_surveys, insert_extra_surveys
+from app.logging_utils import get_file_logger
 
 logger = get_file_logger("backend.scripts.web_scrape_script", "webscrape.log")
 

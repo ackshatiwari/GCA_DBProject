@@ -9,8 +9,8 @@ sys.path.insert(0, str(project_root))
 import os
 import psycopg2
 import pandas as pd
-from backend.services.ml_service import fetch_aggregated_trends, forecast_linear, forecast_ets
-from backend.app.logging_utils import get_file_logger
+from services.ml_service import fetch_aggregated_trends, forecast_linear, forecast_ets
+from app.logging_utils import get_file_logger
 
 logger = get_file_logger("backend.scripts.retrain", "forecasts.log")
 

@@ -7,8 +7,8 @@ import re
 import pandas as pd
 from pydantic import ValidationError
 
-from backend.app.logging_utils import get_file_logger
-from backend.schemas.survey import ManualSurveyPayload
+from app.logging_utils import get_file_logger
+from schemas.survey import ManualSurveyPayload
 
 
 logger = get_file_logger("backend.csv_processor", "csv_import.log")

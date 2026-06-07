@@ -8,9 +8,9 @@ project_root = Path(__file__).parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from backend.app.logging_utils import get_file_logger
-from backend.schemas.survey import ManualSurveyPayload
-from backend.services.survey_persistence import upsert_survey, refresh_children
+from app.logging_utils import get_file_logger
+from schemas.survey import ManualSurveyPayload
+from services.survey_persistence import upsert_survey, refresh_children
 
 import requests
 

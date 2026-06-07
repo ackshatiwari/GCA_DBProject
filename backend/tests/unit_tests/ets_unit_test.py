@@ -1,6 +1,6 @@
 import pandas as pd
 
-from backend.services.ml_service import forecast_ets
+from services.ml_service import forecast_ets
 
 
 def test_forecast_ets_basic():

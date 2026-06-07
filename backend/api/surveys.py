@@ -1,10 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi import File, UploadFile
-from backend.api.auth import require_permission
-from backend.app.logging_utils import get_file_logger
-from backend.services.csv_processor import process_csv_bytes
-from backend.schemas.survey import ManualSurveyPayload
-from backend.services.survey_persistence import upsert_survey, refresh_children
+from api.auth import require_permission
+from app.logging_utils import get_file_logger
+from services.csv_processor import process_csv_bytes
+from schemas.survey import ManualSurveyPayload
+from services.survey_persistence import upsert_survey, refresh_children
 import os
 import psycopg2
 import sys
