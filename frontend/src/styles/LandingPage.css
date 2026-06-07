@@ -19,7 +19,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    background-image: url('goosecreekriver.jpg');
+    background-image: url('/goosecreekriver.jpg');
     background-size: cover;
     background-position: center;
     height: 300px;
