@@ -3,7 +3,7 @@ import { useAuth0 } from '@auth0/auth0-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts'
 import { generatePdf } from "../pdf/generatePdf";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
 
 export default function Dashboard() {
   const { isAuthenticated, getAccessTokenSilently, getAccessTokenWithPopup } = useAuth0()

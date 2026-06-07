@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
 import { RechartsDevtools } from '@recharts/devtools';
 import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts';
 import MultiSelect from './Multi-Select'

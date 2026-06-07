@@ -1,6 +1,6 @@
 import { useAuth0 } from '@auth0/auth0-react'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
 
 export function useAuthenticatedFetch() {
   const { getAccessTokenSilently, getAccessTokenWithPopup } = useAuth0()
