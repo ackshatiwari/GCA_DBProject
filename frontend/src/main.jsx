@@ -7,7 +7,7 @@ import App from './App.jsx'
 const auth0Domain = import.meta.env.VITE_AUTH0_DOMAIN
 const auth0ClientId = import.meta.env.VITE_AUTH0_CLIENT_ID
 const auth0Audience = import.meta.env.VITE_AUTH0_AUDIENCE
-const auth0RedirectUri = import.meta.env.VITE_AUTH0_REDIRECT_URI
+// const auth0RedirectUri = import.meta.env.VITE_AUTH0_REDIRECT_URI
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -17,7 +17,7 @@ createRoot(document.getElementById('root')).render(
       cacheLocation="localstorage"
       useRefreshTokens={true}
       authorizationParams={{
-        redirect_uri: auth0RedirectUri,
+        redirect_uri: window.location.origin,
         audience: auth0Audience,
         scope: 'openid profile email write:manual_submit write:csv_upload',
       }}
