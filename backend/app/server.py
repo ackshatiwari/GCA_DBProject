@@ -53,20 +53,3 @@ app.mount("/static", StaticFiles(directory=str(ROOT_DIR / "static"), check_dir=F
 app.include_router(health_router)
 app.include_router(surveys_router)
 app.include_router(forecasting_router)
-
-@app.get("/")
-def read_root(request: Request):
-    return templates.TemplateResponse(
-        request=request,
-        name="index.html",
-        context={"request": request},
-    )
-
-
-@app.get("/data-entry")
-def data_entry(request: Request):
-    return templates.TemplateResponse(
-        request=request,
-        name="data-entry.html",
-        context={"request": request},
-    )
