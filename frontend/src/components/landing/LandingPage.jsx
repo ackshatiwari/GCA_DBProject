@@ -14,17 +14,17 @@ export default function LandingPage() {
 
                 <div className='card'>
                     <h4>Data Entry</h4>
-                    <p>Submit water quality data through a user-friendly interface, either manually or via CSV upload.</p>
+                    <p>Submit water quality data through a user-friendly interface, either <strong>manually</strong> or via <strong>CSV</strong> upload.</p>
                     <img src='../../../public/csv_upload.png'></img>
                 </div>
                 <div className='card'>
                     <h4>Data Visualization</h4>
-                    <p>View and analyze water quality data through interactive charts and mapsPaired with AI for forecasting future water quality trends based on historical data</p>
+                    <p>View and analyze water quality data through <strong>interactive charts and maps</strong>. Paired with <strong>AI</strong> for forecasting future water quality trends based on historical data</p>
                     <img src='../../../public/Macro_Tends_EXAMPLE.png'></img>
                 </div>
                 <div className='card'>
                     <h4>Data Export</h4>
-                    <p>Download water quality data for offline analysis and reporting.</p>
+                    <p>Download water quality data as <strong>PDFs</strong> for offline analysis and reporting.</p>
                     <img src='../../../public/download.png'></img>
                 </div>
 
