@@ -3,6 +3,7 @@ import { useAuth0 } from '@auth0/auth0-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts'
 import { generatePdf } from "../pdf/generatePdf";
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL
 
 export default function Dashboard() {
   const { isAuthenticated, getAccessTokenSilently, getAccessTokenWithPopup } = useAuth0()
@@ -52,13 +53,13 @@ export default function Dashboard() {
           }
         }
 
-        const res = await fetch('/api/sites', { headers: { Authorization: `Bearer ${token}` } })
+        const res = await fetch(`${API_BASE}/api/sites`, { headers: { Authorization: `Bearer ${token}` } })
         if (!res.ok) throw new Error('Failed to load sites')
         const data = await res.json()
         setSites(data.sites || [])
 
         // also fetch surveys to build simple graphs
-        const res2 = await fetch('/api/surveys/coords', { headers: { Authorization: `Bearer ${token}` } })
+        const res2 = await fetch(`${API_BASE}/api/surveys/coords`, { headers: { Authorization: `Bearer ${token}` } })
         if (res2.ok) {
           const d2 = await res2.json()
           const coords = d2.survey_coords || []
@@ -94,7 +95,7 @@ export default function Dashboard() {
           }
         }
 
-        const res = await fetch(`/api/organism-distribution?organism=${encodeURIComponent(organism)}`, { headers: { Authorization: `Bearer ${token}` } })
+        const res = await fetch(`${API_BASE}/api/organism-distribution?organism=${encodeURIComponent(organism)}`, { headers: { Authorization: `Bearer ${token}` } })
         if (!res.ok) throw new Error('Failed to load distribution')
         const data = await res.json()
         setDistribution(data.distribution || [])
@@ -146,7 +147,7 @@ export default function Dashboard() {
           }
         }
 
-        const res = await fetch(`/api/surveys/site/${encodeURIComponent(selectedSiteId)}/details`, { headers: { Authorization: `Bearer ${token}` } })
+        const res = await fetch(`${API_BASE}/api/surveys/site/${encodeURIComponent(selectedSiteId)}/details`, { headers: { Authorization: `Bearer ${token}` } })
         if (!res.ok) throw new Error('Failed to load site details')
         const data = await res.json()
         const trends = data.macro_taxa_trends || []
@@ -216,7 +217,7 @@ export default function Dashboard() {
         }
       }
 
-      const res = await fetch('/api/trigger-web-scrape', {
+      const res = await fetch(`${API_BASE}/api/trigger-web-scrape`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -255,7 +256,7 @@ export default function Dashboard() {
         }
       }
 
-      const res = await fetch('/api/forecast/retrain-forecast-models', {
+      const res = await fetch(`${API_BASE}/api/forecast/retrain-forecast-models`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       })

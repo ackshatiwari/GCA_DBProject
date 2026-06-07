@@ -5,6 +5,8 @@ import {
 } from 'recharts'
 import { useAuthenticatedFetch } from '../api/client'
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL
+
 function ForecastChart({ siteId, organismName, onForecast }) {
 
     // forecast data, loading, and error states

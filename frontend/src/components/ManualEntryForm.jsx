@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useAuthenticatedFetch } from '../api/client'
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL
+
 function ManualEntryForm() {
     const authenticatedFetch = useAuthenticatedFetch()
     const [form, setForm] = useState({

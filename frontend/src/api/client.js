@@ -1,5 +1,6 @@
 import { useAuth0 } from '@auth0/auth0-react'
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL
 
 export function useAuthenticatedFetch() {
   const { getAccessTokenSilently, getAccessTokenWithPopup } = useAuth0()
@@ -42,7 +43,7 @@ export function useAuthenticatedFetch() {
         Authorization: `Bearer ${token}`,
       }
 
-      return fetch(url, { ...options, headers })
+      return fetch(`${API_BASE}${url}`, { ...options, headers })
     } catch (error) {
       console.error('Auth error:', error)
       throw error
