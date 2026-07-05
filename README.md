@@ -1,6 +1,6 @@
 # GCA Database Project
 
-This project is a survey data platform for collecting, storing, viewing, and forecasting macroinvertebrate survey data. It combines a FastAPI backend, a React/Vite frontend, Auth0-based access control, and a PostgreSQL database hosted in Neon or a compatible Postgres instance.
+This project is a survey data platform for collecting, storing, viewing, and forecasting macroinvertebrate survey data. It combines a FastAPI backend, a React/Vite frontend, Auth0-based access control, and a PostgreSQL database hosted in neon.tech.
 
 ## What the app does
 
@@ -97,7 +97,7 @@ Install the Python dependencies that the backend uses:
 python -m pip install fastapi uvicorn psycopg2-binary python-jose[cryptography] pandas numpy scikit-learn statsmodels openpyxl python-multipart jinja2
 ```
 
-Start the backend from the project root:
+Start the backend from the project root (**FOR DEVELOPMENT ONLY, NOT TO BE USED IN PRODUCTION**)
 
 ```bash
 uvicorn backend.app.server:app --reload
